@@ -5,11 +5,11 @@
 package main
 
 import (
+	"bufio"
+	"encoding/json"
+	"fmt"
 	"log"
 	"net"
-	"time"
-
-	"github.com/felixge/tcpkeepalive"
 )
 
 func main() {
@@ -44,65 +44,39 @@ func main() {
 
 }
 
-func setTcpKeepAlive(conn net.Conn) (*tcpkeepalive.Conn, error) {
-
-	newConn, err := tcpkeepalive.EnableKeepAlive(conn)
-	if err != nil {
-		log.Println("EnableKeepAlive failed:", err)
-		return nil, err
-	}
-
-	err = newConn.SetKeepAliveIdle(10*time.Second)
-	if err != nil {
-		log.Println("SetKeepAliveIdle failed:", err)
-		return nil, err
-	}
-
-
-	err = newConn.SetKeepAliveCount(9)
-	if err != nil {
-		log.Println("SetKeepAliveCount failed:", err)
-		return nil, err
-	}
-
-	err = newConn.SetKeepAliveInterval(10*time.Second)
-	if err != nil {
-		log.Println("SetKeepAliveInterval failed:", err)
-		return nil, err
-	}
-
-	return newConn, nil
+type ComplexData struct{
+	N int
+	S  string
 }
 
-
 func handleConnection(conn net.Conn) {
+	//根据连接的数据进行dispach
+
 	defer conn.Close()
 
-	newConn, err := setTcpKeepAlive(conn)
-	if err != nil {
-		log.Println("setTcpKeepAlive failed:", err)
-		return
-	}
-	readBuffer := make([]byte, 512)
-	var writeBuffer []byte = []byte("You are welcome. I'm server.")
-
-
+	//readBuffer := make([]byte, 512)
+	//var writeBuffer []byte = []byte("You are welcome. I'm server.")
+	bData := make([]byte, 10)
+	rw := bufio.NewReadWriter(bufio.NewReader(conn), bufio.NewWriter(conn))
 	for {
-
-		time.Sleep(1*time.Second)
-		n, err := newConn.Write(writeBuffer)
-		if err != nil {
-			log.Println("Write error:", err)
-			break
+		bData1, err := rw.Read(bData)
+		if err != nil{
+			fmt.Println("链接无法读取.", err)
+			return
 		}
-		log.Println("send:", n)
-		n1, err1 := newConn.Read(readBuffer)
-		log.Println("get:", n1, err1, string(readBuffer))
-		select{
-
+		if bData1>0{
+			var cData ComplexData
+			err:=json.Unmarshal(bData[:bData1], &cData)
+			if err != nil{
+				fmt.Println("err:", err)
+			}
+			fmt.Println("respone: ", bData, bData1, string(bData), cData.N, cData.S)
 		}
+		//// 写入底层网络链接
+		//err = rw.Flush()
+		//if err != nil{
+		//	fmt.Println("Flush写入失败")
+		//	return
+		//}
 	}
-
-	log.Println("connetion end")
-
 }

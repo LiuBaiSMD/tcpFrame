@@ -1,4 +1,4 @@
-module keepAlivetest
+module tcpPractice
 
 go 1.14
 
