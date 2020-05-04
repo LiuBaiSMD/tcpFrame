@@ -17,52 +17,54 @@ import (
 )
 
 func ListenMessageServer(conn net.Conn)error{
-	bData := make([]byte, 128)
-	rw := bufio.NewReadWriter(bufio.NewReader(conn), bufio.NewWriter(conn))
-	for {
-		n, err := rw.Read(bData)
-		if err != nil{
-			fmt.Println("链接无法读取，连接关闭。", err)
-			return nil
+	for{
+		respone, err := getMessage(conn)
+		if err!=nil{
+			return errors.New("no data")
 		}
-		if n>0{
-			var cData datas.StructData
-			err:=json.Unmarshal(bData[:n], &cData)
-			if err != nil{
-				fmt.Println("err:", err)
-			}
-			fmt.Println("respone: ", cData, cData.N, cData.S)
+		cData, ok := respone.(datas.StructData)
+		if ok{
 			err = DisPatch(conn, cData)
 			if err!=nil{
 				return err
 			}
 		}
 	}
-	return nil
 }
 
-func ListenMessageClient(conn net.Conn)error{
-	bData := make([]byte, 128)
-	rw := bufio.NewReadWriter(bufio.NewReader(conn), bufio.NewWriter(conn))
-	for {
-		n, err := rw.Read(bData)
-		if err != nil{
-			fmt.Println("链接无法读取，连接关闭。", err)
-			return nil
+func ListenMessageClient(conn net.Conn)(error){
+	for{
+		respone, err := getMessage(conn)
+		if err!=nil{
+			return errors.New("no data")
 		}
-		if n>0{
-			var cData datas.StructData
-			err:=json.Unmarshal(bData[:n], &cData)
-			if err != nil{
-				fmt.Println("err:", err)
-			}
-			fmt.Println("respone: ", string(bData[:n]), cData)
-			if err!=nil{
-				return err
-			}
+		responeData, ok := respone.(datas.StructData)
+		if ok{
+			fmt.Println("respone: ", responeData)
 		}
 	}
-	return nil
+}
+
+func getMessage(conn net.Conn)(interface{}, error){
+	bData := make([]byte, 128)
+	rw := bufio.NewReadWriter(bufio.NewReader(conn), bufio.NewWriter(conn))
+	n, err := rw.Read(bData)
+	if err != nil{
+		fmt.Println("链接无法读取，连接关闭。", err)
+		return nil, errors.New("链接无法读取，连接关闭。")
+	}
+	if n>0 {
+		var cData datas.StructData
+		err:=json.Unmarshal(bData[:n], &cData)
+		if err != nil{
+			fmt.Println("err:", err)
+		}
+		if err!=nil{
+			return nil, err
+		}
+		return cData, nil
+	}
+	return nil, errors.New("no data")
 }
 
 func SendMessage(conn net.Conn, msg interface{})error{
@@ -74,9 +76,10 @@ func SendMessage(conn net.Conn, msg interface{})error{
 	return nil
 }
 
-func DisPatch(conn net.Conn, data datas.StructData) error{
-	if data.Action == "login"{
-		fmt.Println("login", data.Name, data.PWD)
+func DisPatch(conn net.Conn, data interface{}) error{
+	cData, ok := data.(datas.StructData)
+	if ok && cData.Action == "login"{
+		fmt.Println("login", cData.Name, cData.PWD)
 		respone := datas.StructData{
 			Action:"loginRespone",
 			Code:200,
@@ -86,7 +89,7 @@ func DisPatch(conn net.Conn, data datas.StructData) error{
 			return err
 		}
 	}else{
-		return errors.New(fmt.Sprintf("can not found 【%s】 action in registry!", data.Action))
+		return errors.New(fmt.Sprintf("can not found 【%s】 action in registry!", cData.Action))
 	}
 	return nil
 }
