@@ -11,13 +11,10 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"tcpPractice/datas"
+	"tcpPractice/msg"
 	"time"
 )
-
-type ComplexData struct{
-	N int `json:"N"`
-	S  string `json:"S"`
-}
 
 func Open(addr string) (*bufio.ReadWriter, net.Conn, error) {
 	// Dial the remote process.
@@ -41,41 +38,21 @@ func main() {
 	defer conn.Close()
 
 	fmt.Println("rw", rw)
-	var cData = ComplexData{
+	var cData = datas.StructData{
+		Action:"login",
+		Name:"wuxun",
+		PWD:"123456",
 		N:15,
 		S:"wuxun",
 	}
-	//readBuffer := make([]byte, 512)
-	//writeBuffer := []byte("i am connector!")
+
+	go msg.ListenMessageClient(conn)
+
 	for{
 		bData, _ := json.Marshal(cData)
+		conn.Write(bData)
 		time.Sleep(time.Second * 5)
-		n, err := rw.Write(bData)
-		if err != nil{
-			fmt.Println("error: ", err.Error(), n)
-		}
-		err = rw.Flush()
-		if err != nil {
-			fmt.Println("error: ", err.Error())
-		}
 		fmt.Println("send over!")
 	}
-
-
-	//for {
-	//	var cData = datas.StructData{
-	//		N:14,
-	//		S:"wuxuntest",
-	//	}
-	//	jData, err := json.Marshal(cData)
-	//	n, err := conn.Read(readBuffer)
-	//	if err != nil {
-	//		fmt.Println("Read failed:", err)
-	//		return
-	//	}
-	//	_, err1 := conn.Write(jData)
-	//	fmt.Println("count:", n, "msg:", readBuffer,  string(readBuffer), err1, writeBuffer)
-	//
-	//}
 
 }

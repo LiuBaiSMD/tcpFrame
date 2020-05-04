@@ -5,6 +5,10 @@
 package datas
 
 type StructData struct{
+	Action string
+	Name string
+	PWD string
+	Code int
 	N int
 	S  string
 }
