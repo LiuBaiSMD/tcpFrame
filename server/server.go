@@ -29,7 +29,6 @@ func main() {
 		log.Println("rpc listening", addr)
 	}
 
-
 	for {
 		conn, err := listener.Accept()
 		if err != nil {

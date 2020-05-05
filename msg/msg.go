@@ -22,7 +22,7 @@ func ListenMessageServer(conn net.Conn)error{
 		if err!=nil{
 			return errors.New("no data")
 		}
-		cData, ok := respone.(datas.StructData)
+		cData, ok := respone.(datas.Request)
 		if ok{
 			err = DisPatch(conn, cData)
 			if err!=nil{
@@ -38,7 +38,7 @@ func ListenMessageClient(conn net.Conn)(error){
 		if err!=nil{
 			return errors.New("no data")
 		}
-		responeData, ok := respone.(datas.StructData)
+		responeData, ok := respone.(datas.Request)
 		if ok{
 			fmt.Println("respone: ", responeData)
 		}
@@ -54,7 +54,7 @@ func getMessage(conn net.Conn)(interface{}, error){
 		return nil, errors.New("链接无法读取，连接关闭。")
 	}
 	if n>0 {
-		var cData datas.StructData
+		var cData datas.Request
 		err:=json.Unmarshal(bData[:n], &cData)
 		if err != nil{
 			fmt.Println("err:", err)
@@ -77,10 +77,10 @@ func SendMessage(conn net.Conn, msg interface{})error{
 }
 
 func DisPatch(conn net.Conn, data interface{}) error{
-	cData, ok := data.(datas.StructData)
+	cData, ok := data.(datas.Request)
 	if ok && cData.Action == "login"{
 		fmt.Println("login", cData.Name, cData.PWD)
-		respone := datas.StructData{
+		respone := datas.Respone{
 			Action:"loginRespone",
 			Code:200,
 		}

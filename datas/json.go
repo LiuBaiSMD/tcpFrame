@@ -4,11 +4,17 @@
 
 package datas
 
-type StructData struct{
+type Request struct{
+	Action string
+	Name string
+	PWD string
+	UserId int
+}
+
+type Respone struct {
 	Action string
 	Name string
 	PWD string
 	Code int
-	N int
-	S  string
+	UserId int
 }

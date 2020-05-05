@@ -38,12 +38,10 @@ func main() {
 	defer conn.Close()
 
 	fmt.Println("rw", rw)
-	var cData = datas.StructData{
+	var cData = datas.Request{
 		Action:"login",
 		Name:"wuxun",
 		PWD:"123456",
-		N:15,
-		S:"wuxun",
 	}
 
 	go msg.ListenMessageClient(conn)
