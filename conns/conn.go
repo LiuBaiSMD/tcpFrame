@@ -18,9 +18,9 @@ import (
 type ClientConn struct{
 	userId int				`"用户id"`
 	connID int				`本次处理连接的id`
-	conn *net.Conn
+	conn net.Conn
 }
-func NewClient(uId int, con *net.Conn, cId int)  *ClientConn{
+func NewClient(uId int, con net.Conn, cId int)  *ClientConn{
 	return &ClientConn{
 		userId:uId,
 		conn: con,
@@ -36,7 +36,7 @@ func (c ClientConn)GetConnID()int{
 	return c.connID
 }
 
-func (c ClientConn)GetConn()*net.Conn{
+func (c ClientConn)GetConn()net.Conn{
 	return c.conn
 }
 func (c ClientConn)ListenMessage(){
@@ -46,7 +46,7 @@ func (c ClientConn)ListenMessage(){
 	go func() {
 		defer close(done)
 		for {
-			n, err := &(c.conn).Read(readBuffer)//c.conn.Read(readBuffer)
+			n, err := c.conn.Read(readBuffer)
 			if err != nil {
 				log.Log("read:", err, n)
 				return

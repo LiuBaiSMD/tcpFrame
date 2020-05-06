@@ -21,6 +21,7 @@ func Open(addr string) (*bufio.ReadWriter, net.Conn, error) {
 	// Note that the local port is chosen on the fly. If the local port
 	// must be a specific one, use DialTCP() instead.
 	fmt.Println("Dial " + addr)
+	//conn, err := tls.Dial("tcp", addr, nil)
 	conn, err := net.Dial("tcp", addr)
 	if err != nil {
 		return nil, nil, errors.New(err.Error() +  "Dialing "+addr+" failed")
@@ -42,13 +43,18 @@ func main() {
 		Action:"login",
 		Name:"wuxun",
 		PWD:"123456",
+		UserId:10001,
 	}
 
 	go msg.ListenMessageClient(conn)
 
 	for{
 		bData, _ := json.Marshal(cData)
-		conn.Write(bData)
+		_, err := conn.Write(bData)
+		if err!=nil{
+			conn.Close()
+			return
+		}
 		time.Sleep(time.Second * 5)
 		fmt.Println("send over!")
 	}

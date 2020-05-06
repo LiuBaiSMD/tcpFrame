@@ -13,10 +13,48 @@ import (
 	"fmt"
 	"errors"
 	"net"
+	"tcpPractice/conns"
 	"tcpPractice/datas"
 )
 
-func ListenMessageServer(conn net.Conn)error{
+func ListenMessageServerBeforeLogin(conn net.Conn)error{
+	var loginCount = 0
+	for{
+		loginCount+=1
+		respone, err := getMessage(conn)
+		if err!=nil{
+			return errors.New("no data")
+		}
+		cData, ok := respone.(datas.Request)
+		if ok{
+			//验证登录消息
+			if CheckLogin(cData){
+				//登录成功
+				//将连接加入到conns连接池中，跳出循环，进行其他监听
+				userClient := conns.NewClient(cData.UserId, conn, cData.UserId)
+				conns.PushChan(cData.UserId, userClient)
+				break
+			}
+			//返回登录失败信息
+			respone := datas.Respone{
+				Action:"loginFailed",
+				Code:200,
+			}
+			err := SendMessage(conn, respone)
+			if err!=nil{
+				return err
+			}
+		}
+		if loginCount>=3{
+			conn.Close()
+			return nil
+		}
+	}
+	ListenMessageAfterLogin(conn)
+	return nil
+}
+
+func ListenMessageAfterLogin(conn net.Conn)error{
 	for{
 		respone, err := getMessage(conn)
 		if err!=nil{
@@ -24,12 +62,23 @@ func ListenMessageServer(conn net.Conn)error{
 		}
 		cData, ok := respone.(datas.Request)
 		if ok{
-			err = DisPatch(conn, cData)
+			err := DisPatch(conn, cData)
 			if err!=nil{
 				return err
 			}
 		}
 	}
+}
+
+//校验登录参数是否正确
+func CheckLogin(cData datas.Request)bool{
+	if cData.Action != "login"{
+		return false
+	}
+	if cData.Name=="wuxun" && cData.PWD != ""{
+		return true
+	}
+	return false
 }
 
 func ListenMessageClient(conn net.Conn)(error){
@@ -57,7 +106,7 @@ func getMessage(conn net.Conn)(interface{}, error){
 		var cData datas.Request
 		err:=json.Unmarshal(bData[:n], &cData)
 		if err != nil{
-			fmt.Println("err:", err)
+			fmt.Println("err:", err, string(bData))
 		}
 		if err!=nil{
 			return nil, err
@@ -78,18 +127,6 @@ func SendMessage(conn net.Conn, msg interface{})error{
 
 func DisPatch(conn net.Conn, data interface{}) error{
 	cData, ok := data.(datas.Request)
-	if ok && cData.Action == "login"{
-		fmt.Println("login", cData.Name, cData.PWD)
-		respone := datas.Respone{
-			Action:"loginRespone",
-			Code:200,
-		}
-		err := SendMessage(conn, respone)
-		if err!=nil{
-			return err
-		}
-	}else{
-		return errors.New(fmt.Sprintf("can not found 【%s】 action in registry!", cData.Action))
-	}
+	fmt.Println("loginAfter", cData, ok)
 	return nil
 }

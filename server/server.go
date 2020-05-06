@@ -13,7 +13,7 @@ import (
 
 func main() {
 
-	addr := "0.0.0.0:8080"
+	addr := "127.0.0.1:8080"
 
 	tcpAddr, err := net.ResolveTCPAddr("tcp",addr)
 
@@ -43,9 +43,11 @@ func main() {
 func handleConnection(conn net.Conn) {
 	//根据连接的数据进行dispach
 
-	defer conn.Close()
-	err := msg.ListenMessageServer(conn)
+	fmt.Println("get a accept")
+	//defer conn.Close()
+	err := msg.ListenMessageServerBeforeLogin(conn)
 	if err!=nil{
 		fmt.Println("listenMessage error: ", err.Error())
 	}
+	fmt.Println("handlerConnection over")
 }
