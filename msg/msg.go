@@ -18,7 +18,7 @@ import (
 )
 
 func ListenMessageServerBeforeLogin(conn net.Conn)error{
-	var loginCount = 0
+	var loginCount = 0 //登录计数
 	for{
 		loginCount+=1
 		respone, err := getMessage(conn)

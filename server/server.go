@@ -8,11 +8,13 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"tcpPractice/conns"
 	"tcpPractice/msg"
+	"time"
 )
 
 func main() {
-
+	go testConn()
 	addr := "127.0.0.1:8080"
 
 	tcpAddr, err := net.ResolveTCPAddr("tcp",addr)
@@ -37,6 +39,14 @@ func main() {
 		}
 
 		go handleConnection(conn)
+	}
+}
+
+func testConn(){
+	for{
+		time.Sleep(time.Second)
+		connID, _ := conns.PopChan()
+		fmt.Println(connID)
 	}
 }
 
