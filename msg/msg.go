@@ -10,52 +10,54 @@ package msg
 import (
 	"bufio"
 	"encoding/json"
-	"fmt"
 	"errors"
+	"fmt"
 	"net"
-	"tcpPractice/conns"
+	"tcpPractice/const"
 	"tcpPractice/datas"
+	"tcpPractice/conns"
 )
 
 func ListenMessageServerBeforeLogin(conn net.Conn)error{
-	var loginCount = 0 //登录计数
-	for{
-		loginCount+=1
-		respone, err := getMessage(conn)
+	respone, err := getMessage(conn)
+	if err!=nil{
+		return errors.New("no data")
+	}
+	cData, ok := respone.(datas.Request)
+	if ok && !CheckLogin(cData){
+		fmt.Println("login failed!")
+		//验证登录消息
+		//返回登录失败信息
+		defer conn.Close()
+		respone := datas.Respone{
+			Action:_const.LOGIN_FAILED_ACTION,
+			Code:200,
+		}
+		err := SendMessage(conn, respone)
 		if err!=nil{
-			return errors.New("no data")
-		}
-		cData, ok := respone.(datas.Request)
-		if ok{
-			//验证登录消息
-			if CheckLogin(cData){
-				//登录成功
-				//将连接加入到conns连接池中，跳出循环，进行其他监听
-				userClient := conns.NewClient(cData.UserId, conn, cData.UserId)
-				conns.PushChan(cData.UserId, userClient)
-				break
-			}
-			//返回登录失败信息
-			respone := datas.Respone{
-				Action:"loginFailed",
-				Code:200,
-			}
-			err := SendMessage(conn, respone)
-			if err!=nil{
-				return err
-			}
-		}
-		if loginCount>=3{
-			conn.Close()
-			return nil
+			return err
 		}
 	}
-	ListenMessageAfterLogin(conn)
-	return nil
+	//登录成功
+	fmt.Println("login success!")
+	respone = datas.Respone{
+		Action:_const.LOGIN_SUCCESS_ACTION,
+		Code:200,
+	}
+	err = SendMessage(conn, respone)
+	if err!=nil{
+		return err
+	}
+	//将连接加入到conns连接池中，跳出循环，进行其他监听
+	userClient := conns.NewClient(cData.UserId, conn, cData.UserId)
+	conns.PushChan(cData.UserId, userClient)
+	err = ListenMessageAfterLogin(conn)
+	return err
 }
 
 func ListenMessageAfterLogin(conn net.Conn)error{
 	for{
+		fmt.Println("ListenMessageAfterLogin")
 		respone, err := getMessage(conn)
 		if err!=nil{
 			return errors.New("no data")
@@ -72,10 +74,13 @@ func ListenMessageAfterLogin(conn net.Conn)error{
 
 //校验登录参数是否正确
 func CheckLogin(cData datas.Request)bool{
-	if cData.Action != "login"{
+	fmt.Println("login data", cData)
+	if cData.Action != _const.LOGIN_ACTION{
+		fmt.Println(cData.Action, _const.LOGIN_ACTION)
 		return false
 	}
 	if cData.Name=="wuxun" && cData.PWD != ""{
+		fmt.Println(cData.Name, cData.PWD)
 		return true
 	}
 	return false
@@ -85,6 +90,7 @@ func ListenMessageClient(conn net.Conn)(error){
 	for{
 		respone, err := getMessage(conn)
 		if err!=nil{
+			fmt.Println("ListenMessageClient: ", err)
 			return errors.New("no data")
 		}
 		responeData, ok := respone.(datas.Request)
@@ -127,6 +133,31 @@ func SendMessage(conn net.Conn, msg interface{})error{
 
 func DisPatch(conn net.Conn, data interface{}) error{
 	cData, ok := data.(datas.Request)
+	SendMessage(conn, cData)
 	fmt.Println("loginAfter", cData, ok)
 	return nil
+}
+
+func LoginForClient(conn net.Conn, cData datas.Request)(bool, error){
+	bData, _ := json.Marshal(cData)
+	_, err := conn.Write(bData)
+	if err!=nil{
+		conn.Close()
+		return false, errors.New("login error")
+	}
+	respone, err := getMessage(conn)
+	if err!=nil{
+		return false, errors.New("no data")
+	}
+	cData, _ = respone.(datas.Request)
+	if err!=nil{
+		return false, err
+	}
+
+	if cData.Action==_const.LOGIN_SUCCESS_ACTION{
+		return true, nil
+	}else {
+		return false, errors.New("login failed")
+	}
+
 }

@@ -11,15 +11,14 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"tcpPractice/const"
 	"tcpPractice/datas"
 	"tcpPractice/msg"
+	"tcpPractice/util"
 	"time"
 )
 
 func Open(addr string) (*bufio.ReadWriter, net.Conn, error) {
-	// Dial the remote process.
-	// Note that the local port is chosen on the fly. If the local port
-	// must be a specific one, use DialTCP() instead.
 	fmt.Println("Dial " + addr)
 	//conn, err := tls.Dial("tcp", addr, nil)
 	conn, err := net.Dial("tcp", addr)
@@ -29,34 +28,53 @@ func Open(addr string) (*bufio.ReadWriter, net.Conn, error) {
 	return bufio.NewReadWriter(bufio.NewReader(conn), bufio.NewWriter(conn)), conn, nil
 }
 
+var userId = 10001
+var done chan int
+var loginData = datas.Request{
+	Action:_const.LOGIN_ACTION,
+	Name:"wuxun",
+	PWD:"123456",
+	UserId:userId,
+}
+
 func main() {
-	rw, conn, err := Open("127.0.0.1:8080")
-	//conn, err := net.Dial("tcp", "127.0.0.1:8080")
+	_, conn, err := Open("127.0.0.1:8080")
 	if err != nil {
 		fmt.Println("dial failed:", err)
 		os.Exit(1)
 	}
 	defer conn.Close()
 
-	fmt.Println("rw", rw)
-	var cData = datas.Request{
-		Action:"login",
-		Name:"wuxun",
-		PWD:"123456",
-		UserId:10001,
+	done = make(chan int, 1)
+	loginFlag, err := msg.LoginForClient(conn, loginData)
+	if !loginFlag || err!=nil{
+		fmt.Println("login failed: ", loginFlag, err)
+		return
 	}
-
 	go msg.ListenMessageClient(conn)
+	go Heartbeat(userId, conn)
+	<-done
 
+}
+
+
+
+func Heartbeat(userId int, conn net.Conn)error{
+	timer := time.NewTicker(time.Second * 5)
 	for{
-		bData, _ := json.Marshal(cData)
+		<- timer.C
+		fmt.Println("heartbeat")
+		heartbeatRequest := datas.Request{
+			Action: "heartbeat",
+			UserId:	userId,
+		}
+		bData, _ := json.Marshal(heartbeatRequest)
 		_, err := conn.Write(bData)
 		if err!=nil{
-			conn.Close()
-			return
+			fmt.Println(util.RunFuncName(), " : ", err)
+			return err
 		}
-		time.Sleep(time.Second * 5)
-		fmt.Println("send over!")
 	}
 
+	return nil
 }

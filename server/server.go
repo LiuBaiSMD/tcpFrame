@@ -52,7 +52,6 @@ func testConn(){
 
 func handleConnection(conn net.Conn) {
 	//根据连接的数据进行dispach
-
 	fmt.Println("get a accept")
 	//defer conn.Close()
 	err := msg.ListenMessageServerBeforeLogin(conn)
