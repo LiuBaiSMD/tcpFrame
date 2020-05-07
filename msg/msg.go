@@ -86,11 +86,12 @@ func CheckLogin(cData datas.Request)bool{
 	return false
 }
 
-func ListenMessageClient(conn net.Conn)(error){
+func ListenMessageClient(conn net.Conn, breakFlag chan int)(error){
 	for{
 		respone, err := getMessage(conn)
 		if err!=nil{
 			fmt.Println("ListenMessageClient: ", err)
+			breakFlag<-1
 			return errors.New("no data")
 		}
 		responeData, ok := respone.(datas.Request)

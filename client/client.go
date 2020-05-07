@@ -30,6 +30,7 @@ func Open(addr string) (*bufio.ReadWriter, net.Conn, error) {
 
 var userId = 10001
 var done chan int
+var connClose chan int
 var loginData = datas.Request{
 	Action:_const.LOGIN_ACTION,
 	Name:"wuxun",
@@ -46,34 +47,41 @@ func main() {
 	defer conn.Close()
 
 	done = make(chan int, 1)
+	connClose = make(chan int, 1)
 	loginFlag, err := msg.LoginForClient(conn, loginData)
 	if !loginFlag || err!=nil{
 		fmt.Println("login failed: ", loginFlag, err)
 		return
 	}
-	go msg.ListenMessageClient(conn)
-	go Heartbeat(userId, conn)
+	go msg.ListenMessageClient(conn, done)
+	go Heartbeat(userId, conn, connClose)
 	<-done
+	connClose <- 1
 
 }
 
-
-
-func Heartbeat(userId int, conn net.Conn)error{
+func Heartbeat(userId int, conn net.Conn, closeFlag chan int)error{
 	timer := time.NewTicker(time.Second * 5)
 	for{
-		<- timer.C
-		fmt.Println("heartbeat")
-		heartbeatRequest := datas.Request{
-			Action: "heartbeat",
-			UserId:	userId,
+		select {
+			case <- timer.C:
+				fmt.Println("heartbeat")
+				heartbeatRequest := datas.Request{
+					Action: "heartbeat",
+					UserId:	userId,
+				}
+				bData, _ := json.Marshal(heartbeatRequest)
+				_, err := conn.Write(bData)
+				if err!=nil{
+					fmt.Println(util.RunFuncName(), " : ", err)
+					return err
+				}
+
+			case <- closeFlag:
+				fmt.Println(util.RunFuncName(), "not break")
+				return nil
 		}
-		bData, _ := json.Marshal(heartbeatRequest)
-		_, err := conn.Write(bData)
-		if err!=nil{
-			fmt.Println(util.RunFuncName(), " : ", err)
-			return err
-		}
+
 	}
 
 	return nil
