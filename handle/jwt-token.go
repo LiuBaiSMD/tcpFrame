@@ -8,7 +8,6 @@ desc:   how to use or use for what
 package handle
 
 import (
-	heartbeat "tcpPractice/proto"
 	"tcpPractice/proto"
 	"context"
 	"fmt"

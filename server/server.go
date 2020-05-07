@@ -10,6 +10,7 @@ import (
 	"net"
 	"tcpPractice/conns"
 	"tcpPractice/msg"
+	"tcpPractice/util"
 	"time"
 )
 
@@ -18,7 +19,6 @@ func main() {
 	addr := "127.0.0.1:8080"
 
 	tcpAddr, err := net.ResolveTCPAddr("tcp",addr)
-
 	if err != nil {
 		log.Fatalf("net.ResovleTCPAddr fail:%s", addr)
 	}
@@ -26,9 +26,6 @@ func main() {
 	listener, err := net.ListenTCP("tcp", tcpAddr)
 	if err != nil {
 		log.Fatalf("listen %s fail: %s", addr, err)
-	} else {
-
-		log.Println("rpc listening", addr)
 	}
 
 	for {
@@ -38,7 +35,7 @@ func main() {
 			continue
 		}
 
-		go handleConnection(conn)
+		go msg.HandleConnection(conn)
 	}
 }
 
@@ -47,16 +44,11 @@ func testConn(){
 		time.Sleep(time.Second)
 		connID, _ := conns.PopChan()
 		fmt.Println(connID)
+		conn := conns.GetConnByUId(10001)
+		if conn!=nil{
+			fmt.Println(util.RunFuncName(), "have conn")
+		}
 	}
 }
 
-func handleConnection(conn net.Conn) {
-	//根据连接的数据进行dispach
-	fmt.Println("get a accept")
-	//defer conn.Close()
-	err := msg.ListenMessageServerBeforeLogin(conn)
-	if err!=nil{
-		fmt.Println("listenMessage error: ", err.Error())
-	}
-	fmt.Println("handlerConnection over")
-}
+

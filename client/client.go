@@ -6,7 +6,6 @@ package main
 
 import (
 	"bufio"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net"
@@ -14,8 +13,6 @@ import (
 	"tcpPractice/const"
 	"tcpPractice/datas"
 	"tcpPractice/msg"
-	"tcpPractice/util"
-	"time"
 )
 
 func Open(addr string) (*bufio.ReadWriter, net.Conn, error) {
@@ -33,7 +30,7 @@ var done chan int
 var connClose chan int
 var loginData = datas.Request{
 	Action:_const.LOGIN_ACTION,
-	Name:"wuxun",
+	Name:_const.LOGIN_AUTH,
 	PWD:"123456",
 	UserId:userId,
 }
@@ -54,35 +51,8 @@ func main() {
 		return
 	}
 	go msg.ListenMessageClient(conn, done)
-	go Heartbeat(userId, conn, connClose)
+	go msg.Heartbeat(userId, conn, connClose)
 	<-done
 	connClose <- 1
-
 }
 
-func Heartbeat(userId int, conn net.Conn, closeFlag chan int)error{
-	timer := time.NewTicker(time.Second * 5)
-	for{
-		select {
-			case <- timer.C:
-				fmt.Println("heartbeat")
-				heartbeatRequest := datas.Request{
-					Action: "heartbeat",
-					UserId:	userId,
-				}
-				bData, _ := json.Marshal(heartbeatRequest)
-				_, err := conn.Write(bData)
-				if err!=nil{
-					fmt.Println(util.RunFuncName(), " : ", err)
-					return err
-				}
-
-			case <- closeFlag:
-				fmt.Println(util.RunFuncName(), "not break")
-				return nil
-		}
-
-	}
-
-	return nil
-}

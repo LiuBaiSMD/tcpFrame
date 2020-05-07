@@ -73,13 +73,9 @@ func PopChan()(int, *ClientConn){
 	if !isOK{
 		return -1, nil
 	}
-	Delete(connID)
+	cMap.connMap.Delete(connID)
 	connValue := connValueITF.(*ClientConn)
 	return connID, connValue
-}
-
-func Delete(connID int){
-	cMap.connMap.Delete(connID)
 }
 
 func LenthConn()int{

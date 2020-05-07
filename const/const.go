@@ -10,3 +10,6 @@ package _const
 var LOGIN_ACTION = "login"
 var LOGIN_FAILED_ACTION = "loginFailed"
 var LOGIN_SUCCESS_ACTION = "loginSuccess"
+var HEARTBEAT_ACTION = "heartbeat"
+
+var LOGIN_AUTH = "wuxun"
