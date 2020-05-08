@@ -49,7 +49,7 @@ func CheckLogin(cData datas.Request)bool{
 
 
 func ListenMessageServerBeforeLogin(conn net.Conn)error{
-	respone, err := getMessage(conn)
+	respone, err := GetMessage(conn)
 	if err!=nil{
 		return errors.New("no data")
 	}
@@ -81,15 +81,18 @@ func ListenMessageServerBeforeLogin(conn net.Conn)error{
 	//将连接加入到conns连接池中，跳出循环，进行其他监听
 	userClient := conns.NewClient(cData.UserId, conn, cData.UserId)
 	conns.PushChan(cData.UserId, userClient)
-	err = ListenMessageAfterLogin(conn)
+	err = ListenMessageAfterLogin(cData.UserId, conn)
 	return err
 }
 
 
-func ListenMessageAfterLogin(conn net.Conn)error{
+func ListenMessageAfterLogin(connId int,conn net.Conn)error{
+	//断开连接后从连接池中删除
+	defer conns.DelConnById(connId)
+
 	for{
 		fmt.Println("ListenMessageAfterLogin")
-		respone, err := getMessage(conn)
+		respone, err := GetMessage(conn)
 		if err!=nil{
 			return errors.New("no data")
 		}

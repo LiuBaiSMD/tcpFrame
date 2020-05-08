@@ -22,7 +22,7 @@ func SendMessage(conn net.Conn, msg interface{})error{
 	return nil
 }
 
-func getMessage(conn net.Conn)(interface{}, error){
+func GetMessage(conn net.Conn)(interface{}, error){
 	bData := make([]byte, 128)
 	rw := bufio.NewReadWriter(bufio.NewReader(conn), bufio.NewWriter(conn))
 	n, err := rw.Read(bData)

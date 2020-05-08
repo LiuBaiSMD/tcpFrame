@@ -47,7 +47,6 @@ func testConn(){
 		conn := conns.GetConnByUId(10001)
 		if conn!=nil{
 			fmt.Println(util.RunFuncName(), "have conn")
-			continue
 		}
 		fmt.Println(util.RunFuncName(), "have not conn")
 	}

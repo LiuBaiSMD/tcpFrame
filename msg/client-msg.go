@@ -22,7 +22,7 @@ func LoginForClient(conn net.Conn, cData datas.Request)(bool, error){
 		conn.Close()
 		return false, errors.New("login error")
 	}
-	respone, err := getMessage(conn)
+	respone, err := GetMessage(conn)
 	if err!=nil{
 		return false, errors.New("no data")
 	}
@@ -65,7 +65,7 @@ func Heartbeat(userId int, conn net.Conn, closeFlag chan int)error{
 
 func ListenMessageClient(conn net.Conn, breakFlag chan int)(error){
 	for{
-		respone, err := getMessage(conn)
+		respone, err := GetMessage(conn)
 		if err!=nil{
 			fmt.Println("ListenMessageClient: ", err)
 			breakFlag<-1
