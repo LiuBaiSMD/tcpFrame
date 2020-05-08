@@ -40,12 +40,13 @@ func LoginForClient(conn net.Conn, cData datas.Request)(bool, error){
 }
 
 func Heartbeat(userId int, conn net.Conn, closeFlag chan int)error{
-	timer := time.NewTicker(time.Second * 5)
+	timer := time.NewTicker(time.Second * time.Duration(_const.HEARTBEAT_INTERVAL) )
 	for{
 		select {
 		case <- timer.C:
 			heartbeatRequest := datas.Request{
 				Action: _const.HEARTBEAT_ACTION,
+				//Action: "testheartbeat",
 				UserId:	userId,
 			}
 			bData, _ := json.Marshal(heartbeatRequest)

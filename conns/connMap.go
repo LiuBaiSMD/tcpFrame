@@ -35,6 +35,7 @@ func init() {
 	cMap.curConnID = -1
 	connIDCreator <- 1
 	dao.Init()
+	go manageConnLive()
 }
 
 func PushChan(connID int, connValue interface{}){
@@ -64,8 +65,12 @@ func GetConnByUId(connId int)*ClientConn{
 }
 
 func DelConnById(cId int){
+	//先断开连接
+	conn := GetConnByUId(cId)
+	conn.GetConn().Close()
 	cMap.connMap.Delete(cId)
 	delete(cMap.connLiveMap, cId)
+
 }
 
 func LenthConn()int{

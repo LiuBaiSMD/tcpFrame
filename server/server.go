@@ -10,14 +10,13 @@ import (
 	"net"
 	"tcpPractice/conns"
 	"tcpPractice/msg"
-	"tcpPractice/test"
 	"tcpPractice/util"
 	"time"
 )
 
 func main() {
 	go testConn()
-	go testTcp.TestReconnect(conns.GetCMap())
+	//go testTcp.TestReconnect(conns.GetCMap())
 	addr := "127.0.0.1:8080"
 
 	tcpAddr, err := net.ResolveTCPAddr("tcp",addr)

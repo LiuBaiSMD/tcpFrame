@@ -13,3 +13,6 @@ var LOGIN_SUCCESS_ACTION = "loginSuccess"
 var HEARTBEAT_ACTION = "heartbeat"
 
 var LOGIN_AUTH = "wuxun"
+
+var MAX_LOSE_HEARTBEAT int = 3
+var HEARTBEAT_INTERVAL int = 5
