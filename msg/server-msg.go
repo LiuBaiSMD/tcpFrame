@@ -27,6 +27,10 @@ func HandleConnection(conn net.Conn) {
 
 func DisPatch(conn net.Conn, data interface{}) error{
 	cData, ok := data.(datas.Request)
+	if cData.Action==_const.HEARTBEAT_ACTION && cData.UserId>0{
+		//更新连接的时间戳
+		conns.FlushConnLive(cData.UserId)
+	}
 	SendMessage(conn, cData)
 	fmt.Println("loginAfter", cData, ok)
 	return nil

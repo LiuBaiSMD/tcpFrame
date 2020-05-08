@@ -58,7 +58,6 @@ func Heartbeat(userId int, conn net.Conn, closeFlag chan int)error{
 			fmt.Println(util.RunFuncName(), " ----> closeFlag")
 			return nil
 		}
-
 	}
 	return nil
 }

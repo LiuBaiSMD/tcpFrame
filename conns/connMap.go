@@ -10,15 +10,19 @@ desc:   1.store conns (push and pop)
 package conns
 
 import (
+	"fmt"
 	"sync"
 	"tcpPractice/dao"
+	"tcpPractice/util"
+	"time"
 )
 
 type ConnMap struct {
-	connChan chan int
+	//connChan chan int
 	connMap  sync.Map
 	curConnID int
 	connCMap chan *ClientConn
+	connLiveMap map[int]int64
 }
 
 var connIDCreator chan int
@@ -26,35 +30,28 @@ var cMap ConnMap
 
 func init() {
 	cMap.connCMap = make(chan *ClientConn, 10000)
-	cMap.connChan = make(chan int, 10000)
 	connIDCreator = make(chan int, 1)
+	cMap.connLiveMap = make(map[int]int64)
 	cMap.curConnID = -1
 	connIDCreator <- 1
 	dao.Init()
 }
 
-func Push(connID int, connValue *ClientConn){
-	cMap.connChan <- connID
-	cMap.connCMap <- connValue
-}
-
 func PushChan(connID int, connValue interface{}){
 	cMap.connMap.Store(connID, connValue)
-	cMap.connChan <- connID
+	cMap.connLiveMap[connID] = time.Now().Unix()
 }
 
-func Pop()(int, *ClientConn){
-	connID := <-cMap.connChan
-	cMap.curConnID = connID
-	select {
-		case connValue := <- cMap.connCMap:
-			return connID, connValue
-		default:
-			return -1, nil
+func FlushConnLive(connID int){
+	fmt.Println(util.RunFuncName(), connID, time.Now().Unix())
+	conn := GetConnByUId(connID)
+	if conn==nil{
+		return
 	}
+	cMap.connLiveMap[connID] = time.Now().Unix()
 }
 
-func GetConnByUId(connId int)(*ClientConn){
+func GetConnByUId(connId int)*ClientConn{
 	if connId<1{
 		return nil
 	}
@@ -66,42 +63,13 @@ func GetConnByUId(connId int)(*ClientConn){
 	}
 }
 
-func PopChan()(int, *ClientConn){
-	connID := <-cMap.connChan
-	cMap.curConnID = connID
-	connValueITF, isOK := cMap.connMap.Load(connID)
-	if !isOK{
-		return -1, nil
-	}
-	cMap.connMap.Delete(connID)
-	connValue := connValueITF.(*ClientConn)
-	return connID, connValue
-}
-
 func DelConnById(cId int){
 	cMap.connMap.Delete(cId)
+	delete(cMap.connLiveMap, cId)
 }
 
 func LenthConn()int{
-	return len(cMap.connCMap)
-}
-
-func LenthConnChan()int{
-	return len(cMap.connChan)
-}
-
-func GetCurConnID()int{
-	if len(cMap.connChan)==0{
-		cMap.curConnID = -1
-	}
-	return cMap.curConnID
-}
-
-func GetLastestConnID()int{
-	last := <- connIDCreator
-	next := last+1
-	connIDCreator <- next
-	return last
+	return len(cMap.connLiveMap)
 }
 
 func GetCMap()ConnMap{
