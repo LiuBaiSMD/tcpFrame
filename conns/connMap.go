@@ -99,3 +99,7 @@ func GetLastestConnID()int{
 	connIDCreator <- next
 	return last
 }
+
+func GetCMap()ConnMap{
+	return cMap
+}

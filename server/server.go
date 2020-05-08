@@ -10,12 +10,14 @@ import (
 	"net"
 	"tcpPractice/conns"
 	"tcpPractice/msg"
+	"tcpPractice/test"
 	"tcpPractice/util"
 	"time"
 )
 
 func main() {
 	go testConn()
+	go testTcp.TestReconnect(conns.GetCMap())
 	addr := "127.0.0.1:8080"
 
 	tcpAddr, err := net.ResolveTCPAddr("tcp",addr)
@@ -42,12 +44,12 @@ func main() {
 func testConn(){
 	for{
 		time.Sleep(time.Second)
-		connID, _ := conns.PopChan()
-		fmt.Println(connID)
 		conn := conns.GetConnByUId(10001)
 		if conn!=nil{
 			fmt.Println(util.RunFuncName(), "have conn")
+			continue
 		}
+		fmt.Println(util.RunFuncName(), "have not conn")
 	}
 }
 
