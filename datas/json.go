@@ -4,11 +4,18 @@
 
 package datas
 
+type BaseData struct {
+	Action string
+	UserId int
+	BData []byte
+}
+
 type Request struct{
 	Action string
 	Name string
 	PWD string
 	UserId int
+	BData []byte
 }
 
 type Respone struct {
@@ -17,4 +24,23 @@ type Respone struct {
 	PWD string
 	Code int
 	UserId int
+	BData []byte
 }
+
+type LoginRequest struct{
+	Action string
+	Name string
+	PWD string
+	UserId int
+	BData []byte
+}
+
+type LoginRespone struct {
+	Action string
+	Name string
+	PWD string
+	Code int
+	UserId int
+	BData []byte
+}
+

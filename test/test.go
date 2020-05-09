@@ -29,7 +29,7 @@ func TestReconnect(connMap conns.ConnMap){
 			Action:"comunicate",
 			Name:"testReconnect",
 		}
-		msg.SendMessage(conn, transData)
+		msg.SendMessage(conn, "comunicate", transData)
 		fmt.Println(util.RunFuncName(), "---->")
 	}
 }

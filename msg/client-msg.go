@@ -5,7 +5,6 @@
 package msg
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net"
@@ -16,22 +15,17 @@ import (
 )
 
 func LoginForClient(conn net.Conn, cData datas.Request)(bool, error){
-	bData, _ := json.Marshal(cData)
-	_, err := conn.Write(bData)
-	if err!=nil{
-		conn.Close()
-		return false, errors.New("login error")
-	}
+	SendMessage(conn, _const.LOGIN_ACTION, cData)
 	respone, err := GetMessage(conn)
 	if err!=nil{
 		return false, errors.New("no data")
 	}
-	cData, _ = respone.(datas.Request)
-	if err!=nil{
-		return false, err
+	repData, ok := respone.(datas.BaseData)
+	if !ok{
+		return false, errors.New("data error")
 	}
 
-	if cData.Action==_const.LOGIN_SUCCESS_ACTION{
+	if repData.Action==_const.LOGIN_SUCCESS_ACTION{
 		return true, nil
 	}else {
 		return false, errors.New("login failed")
@@ -49,8 +43,7 @@ func Heartbeat(userId int, conn net.Conn, closeFlag chan int)error{
 				//Action: "testheartbeat",
 				UserId:	userId,
 			}
-			bData, _ := json.Marshal(heartbeatRequest)
-			_, err := conn.Write(bData)
+			err := SendMessage(conn, _const.HEARTBEAT_ACTION, heartbeatRequest)
 			if err!=nil{
 				fmt.Println(util.RunFuncName(), " : ", err)
 				return err
@@ -71,7 +64,7 @@ func ListenMessageClient(conn net.Conn, breakFlag chan int)(error){
 			breakFlag<-1
 			return errors.New("no data")
 		}
-		responeData, ok := respone.(datas.Request)
+		responeData, ok := respone.(datas.BaseData)
 		if ok{
 			fmt.Println("respone: ", responeData)
 		}

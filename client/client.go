@@ -22,7 +22,7 @@ func Open(addr string) (*bufio.ReadWriter, net.Conn, error) {
 	if err != nil {
 		return nil, nil, errors.New(err.Error() +  "Dialing "+addr+" failed")
 	}
-	return bufio.NewReadWriter(bufio.NewReader(conn), bufio.NewWriter(conn)), conn, nil
+	return nil, conn, nil
 }
 
 var userId = 10001
@@ -50,6 +50,7 @@ func main() {
 		fmt.Println("login failed: ", loginFlag, err)
 		return
 	}
+	fmt.Println("login success: ")
 	go msg.ListenMessageClient(conn, done)
 	go msg.Heartbeat(userId, conn, connClose)
 	<-done
