@@ -32,3 +32,22 @@
 ```
 超过三次心跳没有发送心跳包的连接将会被关闭
 ```
+
+## 5.改进包协议
+### ①在打包协议时将标志位进行打包
+```
+{
+	Action string
+	Name string
+	PWD string
+	UserId int
+}
+
+转换成
+
+{
+    LoadCode:1
+    BytesData:[]byte
+}
+```
+### ②通过标志位控制解析包
