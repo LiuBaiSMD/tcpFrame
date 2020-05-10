@@ -1,0 +1,14 @@
+{
+  "userlogin":{
+    "func":  "LoginTest1",
+    "url": "/user_login"
+  },
+  "testuserlogin":{
+    "func": "TestUserLoginTest1",
+    "url": "/test_user_login"
+  },
+  "testuserloginError":{
+    "func": "TestUserLoginErrorTest1",
+    "url": "/test_user_login_error"
+  }
+}
