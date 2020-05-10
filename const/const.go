@@ -10,9 +10,10 @@ package _const
 var LOGIN_ACTION = "login"
 var LOGIN_FAILED_ACTION = "loginFailed"
 var LOGIN_SUCCESS_ACTION = "loginSuccess"
-var HEARTBEAT_ACTION = "heartbeat"
+var HEARTBEAT_ACTION = "HeartBeat"
 
 var LOGIN_AUTH = "wuxun"
 
 var MAX_LOSE_HEARTBEAT int = 3
 var HEARTBEAT_INTERVAL int = 5
+

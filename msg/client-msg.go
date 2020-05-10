@@ -5,6 +5,7 @@
 package msg
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
 	"net"
@@ -15,8 +16,9 @@ import (
 )
 
 func LoginForClient(conn net.Conn, cData datas.Request)(bool, error){
-	SendMessage(conn, _const.LOGIN_ACTION, cData)
-	respone, err := GetMessage(conn)
+	rw := bufio.NewReadWriter(bufio.NewReader(conn), bufio.NewWriter(conn))
+	SendMessage(rw, _const.LOGIN_ACTION, cData)
+	respone, err := GetMessage(rw)
 	if err!=nil{
 		return false, errors.New("no data")
 	}
@@ -34,6 +36,7 @@ func LoginForClient(conn net.Conn, cData datas.Request)(bool, error){
 }
 
 func Heartbeat(userId int, conn net.Conn, closeFlag chan int)error{
+	rw := bufio.NewReadWriter(bufio.NewReader(conn), bufio.NewWriter(conn))
 	timer := time.NewTicker(time.Second * time.Duration(_const.HEARTBEAT_INTERVAL) )
 	for{
 		select {
@@ -43,7 +46,7 @@ func Heartbeat(userId int, conn net.Conn, closeFlag chan int)error{
 				//Action: "testheartbeat",
 				UserId:	userId,
 			}
-			err := SendMessage(conn, _const.HEARTBEAT_ACTION, heartbeatRequest)
+			err := SendMessage(rw, _const.HEARTBEAT_ACTION, heartbeatRequest)
 			if err!=nil{
 				fmt.Println(util.RunFuncName(), " : ", err)
 				return err
@@ -57,8 +60,9 @@ func Heartbeat(userId int, conn net.Conn, closeFlag chan int)error{
 }
 
 func ListenMessageClient(conn net.Conn, breakFlag chan int)(error){
+	rw := bufio.NewReadWriter(bufio.NewReader(conn), bufio.NewWriter(conn))
 	for{
-		respone, err := GetMessage(conn)
+		respone, err := GetMessage(rw)
 		if err!=nil{
 			fmt.Println("ListenMessageClient: ", err)
 			breakFlag<-1

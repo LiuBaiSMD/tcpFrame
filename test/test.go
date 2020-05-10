@@ -8,6 +8,7 @@ desc:   how to use or use for what
 package testTcp
 
 import (
+	"bufio"
 	"fmt"
 	"tcpPractice/datas"
 	"tcpPractice/util"
@@ -29,7 +30,8 @@ func TestReconnect(connMap conns.ConnMap){
 			Action:"comunicate",
 			Name:"testReconnect",
 		}
-		msg.SendMessage(conn, "comunicate", transData)
+		rw := bufio.NewReadWriter(bufio.NewReader(conn), bufio.NewWriter(conn))
+		msg.SendMessage(rw, "comunicate", transData)
 		fmt.Println(util.RunFuncName(), "---->")
 	}
 }

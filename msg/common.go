@@ -5,16 +5,16 @@
 package msg
 
 import (
+	"bufio"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"net"
 	"tcpPractice/datas"
 	"tcpPractice/util"
-	"bufio"
+	"time"
 )
 
-func SendMessage(conn net.Conn, action string, sendMsg interface{})error{
+func SendMessage(rw *bufio.ReadWriter, action string, sendMsg interface{})error{
 	fmt.Println(util.RunFuncName(), action, sendMsg)
 	RBdata, _ := json.Marshal(sendMsg)
 	sendBody := datas.BaseData{
@@ -23,23 +23,24 @@ func SendMessage(conn net.Conn, action string, sendMsg interface{})error{
 		UserId:10001,
 	}
 	bData, _ := json.Marshal(sendBody)
-	rw := bufio.NewReadWriter(bufio.NewReader(conn), bufio.NewWriter(conn))
 
-	_, err := rw.Write(bData)
-	rw.Flush()
-	if err!=nil{
+	n, err := rw.Write(bData)
+	fmt.Println(util.RunFuncName(), "send data size: ", n)
+	err1 := rw.Flush()
+	time.Sleep(time.Microsecond*10)
+	fmt.Println(util.RunFuncName(), "rw flush")
+	if err!=nil||err1!=nil{
 		fmt.Println(util.RunFuncName(), "have err ", err)
 		return err
 	}
 	return nil
 }
 
-func GetMessage(conn net.Conn)(interface{}, error){
+func GetMessage(rw *bufio.ReadWriter)(interface{}, error){
 	fmt.Println(util.RunFuncName(), "start")
-	bData := make([]byte, 512)
-	rw := bufio.NewReadWriter(bufio.NewReader(conn), bufio.NewWriter(conn))
+	bData := make([]byte, 1024)
 	n, err := rw.Read(bData)
-	fmt.Println(util.RunFuncName(), "over")
+	fmt.Println(util.RunFuncName(), "get data size: ", n)
 	if err != nil{
 		fmt.Println("链接无法读取，连接关闭。", err)
 		return nil, errors.New("链接无法读取，连接关闭。")
@@ -48,6 +49,7 @@ func GetMessage(conn net.Conn)(interface{}, error){
 		var cData datas.BaseData
 		err:=json.Unmarshal(bData[:n], &cData)
 		if err!=nil{
+			fmt.Println(util.RunFuncName(), "recieve data: ", string(bData))
 			return nil, err
 		}
 		fmt.Println(util.RunFuncName(), cData.Action, cData)

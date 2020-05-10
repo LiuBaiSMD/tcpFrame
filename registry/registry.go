@@ -13,7 +13,7 @@ import (
 	"tcpPractice/datas"
 )
 type ControllerMapsType map[string]reflect.Value
-type HttpWR  func(w bufio.ReadWriter,BData datas.BaseData) error
+type HttpWR  func(w *bufio.ReadWriter,BData datas.BaseData) error
 type Base struct{
 	CrMap ControllerMapsType
 	FuncRegistry map[string] HttpWR
@@ -53,6 +53,14 @@ func Registery(handles interface{})*Base{
 	}
 	fmt.Println("FuncRegistry: ---->", register.FuncRegistry)
 	return register
+}
+
+func GetHandleByName(funcName string)HttpWR{
+	f, ok := register.FuncRegistry[funcName]
+	if ok{
+		return f
+	}
+	return nil
 }
 
 ////外部使用此接口，将url与handle绑定，也可以在外部直接绑定，不使用此方法
