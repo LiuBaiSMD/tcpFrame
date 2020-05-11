@@ -14,29 +14,29 @@ import (
 	"fmt"
 	"bytes"
 )
-var ioBuf []byte
+var IoBuf []byte
 func ReadData(){
-	fmt.Println("readData byte: ", ioBuf)
+	fmt.Println("readData byte: ", IoBuf)
 	//使用for循环模拟一次完整的数据读取
 	for{
-		if len(ioBuf)<=5{
+		if len(IoBuf)<=5{
 			break
 		}
 		//先读取一个lenthData 4个字节
-		lenthData := ioBuf[0:4]
+		lenthData := IoBuf[0:4]
 		//读取编码格式codeType 1个字节
-		codeType := ioBuf[4]
+		codeType := IoBuf[4]
 		//根据lenthData 读取对应唱的的data
 		l := LenthToInt(lenthData)
 		//根据codeType 解析数据
-		if len(ioBuf)<5+l{
-			fmt.Println("l: ", len(ioBuf), l)
+		if len(IoBuf)<5+l{
+			fmt.Println("l: ", len(IoBuf), l)
 			continue
 		}
-		fmt.Println("l: ", len(ioBuf), l)
-		bRawData := ioBuf[5:5+l]
-		ioBuf = ioBuf[5+l:]
-		fmt.Println("readData: ", lenthData, codeType, l, bRawData, ioBuf)
+		fmt.Println("l: ", len(IoBuf), l)
+		bRawData := IoBuf[5:5+l]
+		IoBuf = IoBuf[5+l:]
+		fmt.Println("readData: ", lenthData, codeType, l, bRawData, IoBuf)
 		fmt.Println("get data: ", string(bRawData))
 		break
 	}

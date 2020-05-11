@@ -7,6 +7,8 @@ desc:   how to use or use for what
 
 package msg_test
 import (
+	"fmt"
+	"tcpPractice/util"
 	"testing"
 	"tcpPractice/msg"
 	"tcpPractice/datas"
@@ -19,6 +21,8 @@ func Test_ExchangeData(t *testing.T) {
 	for i:=0;i<len(ioBuf1);i++{
 		ioBuf = append(ioBuf, ioBuf1[i])
 	}
+	msg.IoBuf = ioBuf
+	fmt.Println(util.RunFuncName(), ioBuf)
 	msg.ReadData()
 	msg.ReadData()
 }
