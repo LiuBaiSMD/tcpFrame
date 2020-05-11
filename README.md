@@ -54,6 +54,10 @@ bData = []byte(data)
 ```
 ### ②通过标志位控制解析包
 
-### ③将方法注册到msg-registry中 todo
+### ③将方法注册到msg-registry中
 
 ### ④自动根据action，找到对应的msg-registry，进行处理
+
+## 6.改进数据包传输协议
+### ①增加head头管理包的传输
+### ②读取head与body
