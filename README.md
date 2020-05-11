@@ -61,12 +61,13 @@ bData = []byte(data)
 ## 6.改进数据包传输协议
 ### ①增加组装传输数据的接口
 ```
-1.数据包长度dataLenth（32位 []byte）+ 编码类型codeType（8位 []byte）+ 数据data（[]byte）
+总共分为两层
+1.(第一层解析)数据包长度dataLenth（32位 []byte）+ 编码类型codeType（8位 []byte）+ 数据data（[]byte）
 dataLenth:存储data长度
 codeType:基础解析格式，标识解析data的方式，json、proto等通用的格式
 data:数据内容
 
-2.解析data模块，将data分解成各个类型json、proto等的BaseData后，其中的Action数据为指导业务层自行解析的模块，比如
+2.(第二层解析)解析data模块，将data分解成各个类型json、proto等的BaseData后，其中的Action数据为指导业务层自行解析的模块，比如
 例① json中的BaseData结构:
 type BaseData struct{
     Action string,
@@ -88,7 +89,7 @@ data = {
         UserId:10001,
         BData:[12, 23, 45, 234, 54, 65],
         }
-然后业务层通过Action将指导BData解析为已经定义好的json结构 HeartBeat
+(第三层解析)然后业务层通过Action将指导BData解析为已经定义好的json结构 HeartBeat
 BData = {
     Action: HeartBeat,
     UserId: 10001,
@@ -118,7 +119,7 @@ data = {
         UserId:10001,
         BData:[12, 23, 45, 234, 54, 65],
         }
-然后业务层通过Action将BData解析为已经定义好的proto结构 HeartBeat，
+(第三层解析)然后业务层通过Action将BData解析为已经定义好的proto结构 HeartBeat，
 BData = {
     Action: HeartBeat,
     UserId: 10001,
