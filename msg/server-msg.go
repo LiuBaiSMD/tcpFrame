@@ -12,17 +12,71 @@ import (
 	"tcpPractice/conns"
 	_const "tcpPractice/const"
 	"tcpPractice/datas"
+	"tcpPractice/util"
 )
 
+//func HandleConnection(conn net.Conn) {
+//	//根据连接的数据进行dispach
+//	fmt.Println("get a accept")
+//	//defer conn.Close()
+//	err := ListenMessageServerBeforeLogin(conn)
+//	if err!=nil{
+//		fmt.Println("listenMessage error: ", err.Error())
+//	}
+//	fmt.Println("handlerConnection over")
+//}
+
 func HandleConnection(conn net.Conn) {
+	//将连接加入到conns连接池中，跳出循环，进行其他监听
+	userClient := conns.NewClient(10001, conn, 10001)
+	conns.PushChan(10001, userClient)
 	//根据连接的数据进行dispach
-	fmt.Println("get a accept")
-	//defer conn.Close()
-	err := ListenMessageServerBeforeLogin(conn)
-	if err!=nil{
-		fmt.Println("listenMessage error: ", err.Error())
+	rw := bufio.NewReadWriter(bufio.NewReader(conn), bufio.NewWriter(conn))
+	var recieveBytes []byte
+	readChan := make(chan []byte, 1024)
+	done := make(chan int, 1)
+	closeFlag := make(chan int, 1)
+	//读取的数据通过chan交互
+
+	//从tcp iobuf中读取数据放入readChan中
+	go GetBytesFromBuf(rw, readChan, closeFlag)
+	go BindBytesFromBuf(&recieveBytes, readChan, done, closeFlag)
+	//不断从读取的数据中解析
+	for{
+		fmt.Println("get start")
+		<-done
+		fmt.Println("get over")
+		rawData := ReadData(&recieveBytes)
+		fmt.Println(util.RunFuncName(), "rawData: ", rawData)
+		//rawData := 1
 	}
-	fmt.Println("handlerConnection over")
+}
+
+//不断的从网络连接buf中获取数据
+func GetBytesFromBuf(rw *bufio.ReadWriter, readChan chan []byte, closeFlag chan int){
+	for{
+		bData := make([]byte, 1024)
+		n, err := rw.Read(bData)
+		fmt.Println(util.RunFuncName(), "get data size: ", n)
+		if err != nil{
+			fmt.Println("链接无法读取，连接关闭。", err)
+			closeFlag<-1
+		}
+		if n>0 {
+			bData = bData[:n]
+			readChan <- bData
+			fmt.Println(util.RunFuncName(), "get data: ", bData)
+		}
+	}
+}
+
+func BindBytesFromBuf(byteStore *[]byte, readChan chan []byte, done chan int, closeFlag chan int){
+	for{
+		s := <- readChan
+		fmt.Println(util.RunFuncName(), "get data: ", s)
+		*byteStore = util.BytesCombine(*byteStore, s)
+		done<-1
+	}
 }
 
 func ListenMessageServerBeforeLogin(conn net.Conn)error{

@@ -12,34 +12,35 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"bytes"
+	"tcpPractice/util"
 )
 var IoBuf []byte
-func ReadData(){
-	fmt.Println("readData byte: ", IoBuf)
+func ReadData(ioBuf *[]byte)error{
+	fmt.Println("readData byte: ", ioBuf)
 	//使用for循环模拟一次完整的数据读取
 	for{
-		if len(IoBuf)<=5{
+		if len(*ioBuf)<=5{
 			break
 		}
 		//先读取一个lenthData 4个字节
-		lenthData := IoBuf[0:4]
+		lenthData := (*ioBuf)[0:4]
 		//读取编码格式codeType 1个字节
-		codeType := IoBuf[4]
+		codeType := (*ioBuf)[4]
 		//根据lenthData 读取对应唱的的data
 		l := LenthToInt(lenthData)
 		//根据codeType 解析数据
-		if len(IoBuf)<5+l{
-			fmt.Println("l: ", len(IoBuf), l)
+		if len(*ioBuf)<5+l{
+			fmt.Println("l: ", len(*ioBuf), l)
 			continue
 		}
-		fmt.Println("l: ", len(IoBuf), l)
-		bRawData := IoBuf[5:5+l]
-		IoBuf = IoBuf[5+l:]
-		fmt.Println("readData: ", lenthData, codeType, l, bRawData, IoBuf)
+		fmt.Println("l: ", len(*ioBuf), l)
+		bRawData := (*ioBuf)[5:5+l]
+		*ioBuf = (*ioBuf)[5+l:]
+		fmt.Println("readData: ", lenthData, codeType, l, bRawData, *ioBuf)
 		fmt.Println("get data: ", string(bRawData))
 		break
 	}
+	return nil
 }
 
 //11001100010010110111111011111000011011111011011
@@ -60,7 +61,7 @@ func BuildData(codeType int,rawData interface{})([]byte, error){
 	fmt.Println("rawData: ", bRawData)
 
 	//组装一个数据包
-	tbData := BytesCombine(lRawData, cRawData, bRawData)
+	tbData := util.BytesCombine(lRawData, cRawData, bRawData)
 	fmt.Println("tbData: ", tbData)
 	return tbData, errors.New("test")
 }
@@ -80,16 +81,6 @@ func DecodeCodeType(i int8) []byte {
 	var buf = make([]byte, 1)
 	buf[0] = byte(i)
 	return buf
-}
-
-func BytesCombine(pBytes ...[]byte) []byte {
-	len := len(pBytes)
-	s := make([][]byte, len)
-	for index := 0; index < len; index++ {
-		s[index] = pBytes[index]
-	}
-	sep := []byte("")
-	return bytes.Join(s, sep)
 }
 
 func LenthToInt(buf []byte) int {

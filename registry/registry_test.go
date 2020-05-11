@@ -19,33 +19,33 @@ type RfAddrTest struct {
 }
 
 func (b* RfAddrTest)TestUserLogintest() registry.HttpWR{
-	return func(w bufio.ReadWriter, BData datas.BaseData)error{
+	return func(w *bufio.ReadWriter, BData datas.BaseData)error{
 		log.Log("method:", util.RunFuncName()) //获取请求的方法
 		return nil
 	}
 }
 
 func (b* RfAddrTest) Logintest() registry.HttpWR {
-	return  func(w bufio.ReadWriter, BData datas.BaseData)error{
+	return  func(w *bufio.ReadWriter, BData datas.BaseData)error{
 		log.Log("method:", util.RunFuncName()) //获取请求的方法
 		return nil
 	}
 }
 
 func Test_Registry(t *testing.T) {
-	var rfaddr registry.RfAddr
+	var rfaddr RfAddrTest
 	register := registry.Registery(&rfaddr)
 	if register!= nil{
-		fmt.Println(util.RunFuncName(), register.FuncRegistry["Login"])
-		f := register.FuncRegistry["Login"]
-		f(bufio.ReadWriter{}, datas.BaseData{})
+		fmt.Println(util.RunFuncName(), register.FuncRegistry["Logintest"])
+		f := register.FuncRegistry["Logintest"]
+		f(&bufio.ReadWriter{}, datas.BaseData{})
 	}
 	var rfaddr1 RfAddrTest
 	register1 := registry.Registery(&rfaddr1)
 	if register1!= nil{
-		fmt.Println(util.RunFuncName(), register1.FuncRegistry["Login"])
-		f := register1.FuncRegistry["Login"]
-		f(bufio.ReadWriter{}, datas.BaseData{})
+		fmt.Println(util.RunFuncName(), register1.FuncRegistry["Logintest"])
+		f := register1.FuncRegistry["Logintest"]
+		f(&bufio.ReadWriter{}, datas.BaseData{})
 	}
 	for key, _ :=range register.FuncRegistry{
 		fmt.Println("func key: ", key)

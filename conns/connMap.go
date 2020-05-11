@@ -35,7 +35,8 @@ func init() {
 	cMap.curConnID = -1
 	connIDCreator <- 1
 	dao.Init()
-	go manageConnLive()
+	//关闭心跳检测
+	//go manageConnLive()
 }
 
 func PushChan(connID int, connValue interface{}){

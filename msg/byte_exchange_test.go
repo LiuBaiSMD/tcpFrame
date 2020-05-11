@@ -6,6 +6,7 @@ desc:   how to use or use for what
 */
 
 package msg_test
+
 import (
 	"fmt"
 	"tcpPractice/util"
@@ -13,6 +14,7 @@ import (
 	"tcpPractice/msg"
 	"tcpPractice/datas"
 )
+
 var ioBuf []byte
 
 func Test_ExchangeData(t *testing.T) {
@@ -23,6 +25,6 @@ func Test_ExchangeData(t *testing.T) {
 	}
 	msg.IoBuf = ioBuf
 	fmt.Println(util.RunFuncName(), ioBuf)
-	msg.ReadData()
-	msg.ReadData()
+	msg.ReadData(&ioBuf)
+	msg.ReadData(&ioBuf)
 }

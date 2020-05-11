@@ -8,6 +8,7 @@ desc:   how to use or use for what
 package util
 
 import (
+	"bytes"
 	"runtime"
 )
 
@@ -16,4 +17,14 @@ func RunFuncName()string{
 	runtime.Callers(2,pc)
 	f := runtime.FuncForPC(pc[0])
 	return f.Name()
+}
+
+func BytesCombine(pBytes ...[]byte) []byte {
+	len := len(pBytes)
+	s := make([][]byte, len)
+	for index := 0; index < len; index++ {
+		s[index] = pBytes[index]
+	}
+	sep := []byte("")
+	return bytes.Join(s, sep)
 }

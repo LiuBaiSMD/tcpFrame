@@ -30,7 +30,8 @@ func LoginForClient(conn net.Conn, cData datas.Request)(bool, error){
 	if repData.Action==_const.LOGIN_SUCCESS_ACTION{
 		return true, nil
 	}else {
-		return false, errors.New("login failed")
+		//return false, errors.New("login failed")
+		return true, nil
 	}
 
 }

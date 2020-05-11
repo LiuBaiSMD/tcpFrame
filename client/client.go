@@ -45,12 +45,6 @@ func main() {
 
 	done = make(chan int, 1)
 	connClose = make(chan int, 1)
-	loginFlag, err := msg.LoginForClient(conn, loginData)
-	if !loginFlag || err!=nil{
-		fmt.Println("login failed: ", loginFlag, err)
-		return
-	}
-	fmt.Println("login success: ")
 	go msg.ListenMessageClient(conn, done)
 	go msg.Heartbeat(userId, conn, connClose)
 	<-done

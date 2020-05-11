@@ -22,9 +22,11 @@ func SendMessage(rw *bufio.ReadWriter, action string, sendMsg interface{})error{
 		BData: RBdata,
 		UserId:10001,
 	}
-	bData, _ := json.Marshal(sendBody)
-
+	//bData, _ := json.Marshal(sendBody)
+	//再加工一次，
+	bData, _ := BuildData(1, sendBody)
 	n, err := rw.Write(bData)
+	rw.Write(bData)
 	fmt.Println(util.RunFuncName(), "send data size: ", n)
 	err1 := rw.Flush()
 	time.Sleep(time.Microsecond*10)
