@@ -59,5 +59,71 @@ bData = []byte(data)
 ### ④自动根据action，找到对应的msg-registry，进行处理
 
 ## 6.改进数据包传输协议
-### ①增加head头管理包的传输
-### ②读取head与body
+### ①增加组装传输数据的接口
+```
+1.数据包长度dataLenth（32位 []byte）+ 编码类型codeType（8位 []byte）+ 数据data（[]byte）
+dataLenth:存储data长度
+codeType:基础解析格式，标识解析data的方式，json、proto等通用的格式
+data:数据内容
+
+2.解析data模块，将data分解成各个类型json、proto等的BaseData后，其中的Action数据为指导业务层自行解析的模块，比如
+例① json中的BaseData结构:
+type BaseData struct{
+    Action string,
+    UserId int,
+    BData []byte,
+}
+
+json中的HeartBeat结构:
+type HeartBeat struct{
+    Action string,
+    UserId int,
+    TimeStamp int,
+    OtherMsg string,
+}
+
+例如在上述拆包过程中codeType=1代表json格式数据，将data解析为json的BaseData格式:得到以下数据
+data = {
+        Action:"Heartbeat",
+        UserId:10001,
+        BData:[12, 23, 45, 234, 54, 65],
+        }
+然后业务层通过Action将指导BData解析为已经定义好的json结构 HeartBeat
+BData = {
+    Action: HeartBeat,
+    UserId: 10001,
+    TimeStamp: 123456789,
+    OtherMsg: "hello world!",
+}
+
+例②
+proto中的BaseData结构:
+message BaseData {
+    string Action = 1;
+    int64 UserId = 2;
+    bytes BData = 3;
+}
+
+proto中的HeartBeat结构:
+message HeartBeat {
+    string Action = 1;
+    int64 UserId = 2;
+    int64 TimeStamp = 3;
+    string OtherMsg = 4;
+}
+
+例如在上述拆包过程中codeType=2代表proto格式数据，将data解析为proto的BaseData格式:得到以下数据
+data = {
+        Action:"Heartbeat",
+        UserId:10001,
+        BData:[12, 23, 45, 234, 54, 65],
+        }
+然后业务层通过Action将BData解析为已经定义好的proto结构 HeartBeat，
+BData = {
+    Action: HeartBeat,
+    UserId: 10001,
+    TimeStamp: 123456789,
+    OtherMsg: "hello world!",
+}
+
+```
