@@ -1,6 +1,6 @@
 // @Author: liubai
 // @Date: 2020/5/2 5:26 下午
-// @Desc: use for what
+// @Desc: 模拟服务端，其多功能tcp服务
 
 package main
 

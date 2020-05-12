@@ -86,6 +86,7 @@ BData = {
 }
 */
 
+//从本地[]byte缓存解析出完整的原始[]byte数据包
 func ReadData(ioBuf *[]byte)(codeType int,bRawData []byte,err error){
 	fmt.Println("readData byte: ", ioBuf)
 	//使用for循环模拟一次完整的数据读取
@@ -98,7 +99,7 @@ func ReadData(ioBuf *[]byte)(codeType int,bRawData []byte,err error){
 	codeType = int((*ioBuf)[4])
 	//根据lenthData 读取对应唱的的data
 	l := LenthToInt(lenthData)
-	//根据codeType 解析数据
+	//根据codeType 解析数据，如果数据长度不够，则不作处理，返回空值不报错
 	if len(*ioBuf)<5+l{
 		fmt.Println("l: ", len(*ioBuf), l)
 		return 0, []byte(""), nil

@@ -1,6 +1,6 @@
 // @Author: liubai
 // @Date: 2020/5/10 11:28 上午
-// @Desc: use for what
+// @Desc: 自动注册处理方法，可以通过方法名字获取方法，并直接调用
 
 package registry
 
@@ -63,11 +63,3 @@ func GetHandleByName(funcName string)HttpWR{
 	return nil
 }
 
-////外部使用此接口，将url与handle绑定，也可以在外部直接绑定，不使用此方法
-//func BindUrlHandle(service web.Service, patter , method string){
-//	f, ok := register.FuncRegistry[method]
-//	if !ok {
-//		panic("绑定的方法未注册！")
-//	}
-//	service.HandleFunc(patter,f)
-//}

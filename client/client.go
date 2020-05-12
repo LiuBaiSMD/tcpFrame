@@ -1,6 +1,6 @@
 // @Author: liubai
 // @Date: 2020/5/2 5:27 下午
-// @Desc: use for what
+// @Desc: 模拟客户端，在运行server中主函数后调用
 
 package main
 
@@ -45,7 +45,6 @@ func main() {
 
 	done = make(chan int, 1)
 	connClose = make(chan int, 1)
-	go msg.ListenMessageClient(conn, done)
 	go msg.Heartbeat(userId, conn, connClose)
 	<-done
 	connClose <- 1

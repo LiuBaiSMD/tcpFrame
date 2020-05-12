@@ -1,7 +1,7 @@
 /*
 @Author: liubai
 @Date: 2020/5/10 6:16 下午
-@Desc: use for what
+@Desc: 处理消息的具体方法，需要使用的方法可通过registry模块进行注册
 */
 
 package msg

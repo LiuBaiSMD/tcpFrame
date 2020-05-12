@@ -6,35 +6,13 @@ package msg
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
 	"net"
-	_const "tcpPractice/const"
+	"tcpPractice/const"
 	"tcpPractice/datas"
 	"tcpPractice/util"
 	"time"
 )
-
-func LoginForClient(conn net.Conn, cData datas.Request)(bool, error){
-	rw := bufio.NewReadWriter(bufio.NewReader(conn), bufio.NewWriter(conn))
-	SendMessage(rw, _const.LOGIN_ACTION, cData)
-	respone, err := GetMessage(rw)
-	if err!=nil{
-		return false, errors.New("no data")
-	}
-	repData, ok := respone.(datas.BaseData)
-	if !ok{
-		return false, errors.New("data error")
-	}
-
-	if repData.Action==_const.LOGIN_SUCCESS_ACTION{
-		return true, nil
-	}else {
-		//return false, errors.New("login failed")
-		return true, nil
-	}
-
-}
 
 func Heartbeat(userId int, conn net.Conn, closeFlag chan int)error{
 	rw := bufio.NewReadWriter(bufio.NewReader(conn), bufio.NewWriter(conn))
@@ -58,20 +36,4 @@ func Heartbeat(userId int, conn net.Conn, closeFlag chan int)error{
 		}
 	}
 	return nil
-}
-
-func ListenMessageClient(conn net.Conn, breakFlag chan int)(error){
-	rw := bufio.NewReadWriter(bufio.NewReader(conn), bufio.NewWriter(conn))
-	for{
-		respone, err := GetMessage(rw)
-		if err!=nil{
-			fmt.Println("ListenMessageClient: ", err)
-			breakFlag<-1
-			return errors.New("no data")
-		}
-		responeData, ok := respone.(datas.BaseData)
-		if ok{
-			fmt.Println("respone: ", responeData)
-		}
-	}
 }

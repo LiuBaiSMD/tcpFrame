@@ -23,59 +23,27 @@ func HandleConnection(conn net.Conn) {
 	conns.PushChan(10001, userClient)
 
 
-	//根据连接的数据进行dispach
 	rw := bufio.NewReadWriter(bufio.NewReader(conn), bufio.NewWriter(conn))
-	var recieveBytes []byte
-	readChan := make(chan []byte, 1024)
 	codeTypeChan := make(chan int, 1)
 	bRawChan := make(chan []byte, 1)
 	closeFlag := make(chan int, 1)
 	//读取的数据通过chan交互
 
-	//从tcp iobuf中读取数据放入readChan中
-	go func(){
-		for{
-			bData := make([]byte, 1024)
-			n, err := rw.Read(bData)
-			fmt.Println(util.RunFuncName(), "get data size: ", n)
-			if err != nil{
-				fmt.Println("链接无法读取，连接关闭。", err)
-				closeFlag<-1
-				return
-			}
-			if n>0 {
-				bData = bData[:n]
-				readChan <- bData
-				fmt.Println(util.RunFuncName(), "get data: ", bData)
-			}
-		}
-	}()
-
-	//将上面方法读取的数据存入本地缓存recieveBytes中
-	// todo 改进部分，不需要通过done管道驱动，
-	go func(){
-		for{
-			s := <- readChan
-			recieveBytes = util.BytesCombine(recieveBytes, s)
-			codeType, bRawData, err := ReadData(&recieveBytes)
-			fmt.Println(util.RunFuncName(), "get rawData: ", codeType, bRawData, err)
-
-			if codeType!=0 && len(bRawData) > 0{
-				codeTypeChan <- codeType
-				bRawChan <- bRawData
-			}
-		}
-	}()
+	//监听消息
+	go ReadMessage(rw, codeTypeChan, bRawChan, closeFlag)
 
 	//监听连接关闭信号，准备关闭连接
 	go func(){
 		<-closeFlag
+		fmt.Println(util.RunFuncName(), "get wrong data, will close conn!")
 		conn.Close()
 		return
 	}()
 
 	//不断从recieveBytes读取数据解析
 	for{
+
+		//监听rawData数据
 		codeType := <- codeTypeChan
 		bRawData := <- bRawChan
 		fmt.Println(util.RunFuncName(), "will encode Data ", codeType, bRawData)
@@ -91,7 +59,5 @@ func HandleConnection(conn net.Conn) {
 			}
 		}
 		//todo 通过codeType解析数据，进行dispatch
-
 	}
 }
-

@@ -7,7 +7,6 @@ package msg
 import (
 	"bufio"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"tcpPractice/datas"
 	"tcpPractice/util"
@@ -27,13 +26,11 @@ func SendMessage(rw *bufio.ReadWriter, action string, sendMsg interface{})error{
 	//bData, _ := json.Marshal(sendBody)
 	//再加工一次，
 	bData, _ := BuildData(1, sendBody)
-	//n, err := rw.Write(bData)
-	n, err := rw.Write([]byte{0, 0, 0, 1, 1, 123})
+	n, err := rw.Write(bData)
+	//n, err := rw.Write([]byte{0, 0, 0, 3, 1, 3})
 	err1 := rw.Flush()
 	fmt.Println(util.RunFuncName(), "send data size: ", n, bData)
-
 	time.Sleep(time.Microsecond*10)
-	fmt.Println(util.RunFuncName(), "rw flush")
 	if err!=nil||err1!=nil{
 		fmt.Println(util.RunFuncName(), "have err ", err)
 		return err
@@ -41,24 +38,39 @@ func SendMessage(rw *bufio.ReadWriter, action string, sendMsg interface{})error{
 	return nil
 }
 
-func GetMessage(rw *bufio.ReadWriter)(interface{}, error){
-	fmt.Println(util.RunFuncName(), "start")
-	bData := make([]byte, 1024)
-	n, err := rw.Read(bData)
-	fmt.Println(util.RunFuncName(), "get data size: ", n)
-	if err != nil{
-		fmt.Println("链接无法读取，连接关闭。", err)
-		return nil, errors.New("链接无法读取，连接关闭。")
-	}
-	if n>0 {
-		var cData datas.BaseData
-		err:=json.Unmarshal(bData[:n], &cData)
-		if err!=nil{
-			fmt.Println(util.RunFuncName(), "recieve data: ", string(bData))
-			return nil, err
+func ReadMessage(rw *bufio.ReadWriter, codeTypeChan chan int, bRawChan chan []byte, closeFlag chan int){
+	var recieveBytes []byte
+
+	readChan := make(chan []byte, 1024)
+	//从tcp iobuf中读取数据放入readChan中
+	go func(){
+		for{
+			bData := make([]byte, 1024)
+			n, err := rw.Read(bData)
+			fmt.Println(util.RunFuncName(), "get data size: ", n)
+			if err != nil{
+				fmt.Println("链接无法读取，连接关闭。", err)
+				closeFlag<-1
+				return
+			}
+			if n>0 {
+				bData = bData[:n]
+				readChan <- bData
+				fmt.Println(util.RunFuncName(), "get data: ", bData)
+			}
 		}
-		fmt.Println(util.RunFuncName(), cData.Action, cData)
-		return cData, nil
+	}()
+
+	//将上面方法读取的数据存入本地缓存recieveBytes中
+	for{
+		s := <- readChan
+		recieveBytes = util.BytesCombine(recieveBytes, s)
+		codeType, bRawData, err := ReadData(&recieveBytes)
+		fmt.Println(util.RunFuncName(), "get rawData: ", codeType, bRawData, err)
+
+		if codeType!=0 && len(bRawData) > 0{
+			codeTypeChan <- codeType
+			bRawChan <- bRawData
+		}
 	}
-	return nil, errors.New("no data")
 }
