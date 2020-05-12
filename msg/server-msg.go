@@ -7,8 +7,10 @@ package msg
 import (
 	"bufio"
 	"fmt"
+	"encoding/json"
 	"net"
 	"tcpPractice/conns"
+	"tcpPractice/datas"
 	"tcpPractice/util"
 )
 
@@ -57,6 +59,7 @@ func HandleConnection(conn net.Conn) {
 			recieveBytes = util.BytesCombine(recieveBytes, s)
 			codeType, bRawData, err := ReadData(&recieveBytes)
 			fmt.Println(util.RunFuncName(), "get rawData: ", codeType, bRawData, err)
+
 			if codeType!=0 && len(bRawData) > 0{
 				codeTypeChan <- codeType
 				bRawChan <- bRawData
@@ -70,12 +73,23 @@ func HandleConnection(conn net.Conn) {
 		conn.Close()
 		return
 	}()
-	//不断从recieveBytes读取数据解析
 
+	//不断从recieveBytes读取数据解析
 	for{
 		codeType := <- codeTypeChan
 		bRawData := <- bRawChan
 		fmt.Println(util.RunFuncName(), "will encode Data ", codeType, bRawData)
+
+		//todo 根据codeType实现反序列化bRawData的interface{}，将encoding部分脱离出去
+		if codeType==1 && len(bRawData)>0{
+			var rawData datas.BaseData
+			err := json.Unmarshal(bRawData, &rawData)
+			if err !=nil{
+				//协议出错断开连接
+				fmt.Println("get wrong rawData: ", string(bRawData))
+				closeFlag<-1
+			}
+		}
 		//todo 通过codeType解析数据，进行dispatch
 
 	}

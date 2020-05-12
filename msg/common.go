@@ -14,6 +14,8 @@ import (
 	"time"
 )
 
+//todo 根据codeType实现封装序列化sendBody的interface{}，将decoding部分脱离出去
+//todo 业务自行序列化sendMsg数据，只传入一个[]byte格式的sendMsg
 func SendMessage(rw *bufio.ReadWriter, action string, sendMsg interface{})error{
 	fmt.Println(util.RunFuncName(), action, sendMsg)
 	RBdata, _ := json.Marshal(sendMsg)
@@ -25,9 +27,10 @@ func SendMessage(rw *bufio.ReadWriter, action string, sendMsg interface{})error{
 	//bData, _ := json.Marshal(sendBody)
 	//再加工一次，
 	bData, _ := BuildData(1, sendBody)
-	n, err := rw.Write(bData)
+	//n, err := rw.Write(bData)
+	n, err := rw.Write([]byte{0, 0, 0, 1, 1, 123})
 	err1 := rw.Flush()
-	fmt.Println(util.RunFuncName(), "send data size: ", n)
+	fmt.Println(util.RunFuncName(), "send data size: ", n, bData)
 
 	time.Sleep(time.Microsecond*10)
 	fmt.Println(util.RunFuncName(), "rw flush")
