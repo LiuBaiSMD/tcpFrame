@@ -13,6 +13,8 @@ import (
 	"tcpPractice/const"
 	"tcpPractice/datas"
 	"tcpPractice/msg"
+	"tcpPractice/util"
+	"time"
 )
 
 func Open(addr string) (*bufio.ReadWriter, net.Conn, error) {
@@ -43,10 +45,29 @@ func main() {
 	}
 	defer conn.Close()
 
-	done = make(chan int, 1)
 	connClose = make(chan int, 1)
-	go msg.Heartbeat(userId, conn, connClose)
-	<-done
-	connClose <- 1
+	go Heartbeat(userId, conn, connClose)
+	<-connClose
 }
 
+func Heartbeat(userId int, conn net.Conn, closeFlag chan int)error{
+	rw := bufio.NewReadWriter(bufio.NewReader(conn), bufio.NewWriter(conn))
+	timer := time.NewTicker(time.Second * time.Duration(_const.HEARTBEAT_INTERVAL) )
+	for{
+		select {
+		case <- timer.C:
+			heartbeatRequest := datas.Request{
+				Action: _const.HEARTBEAT_ACTION,
+				//Action: "testheartbeat",
+				UserId:	userId,
+			}
+			err := msg.SendMessage(rw, _const.HEARTBEAT_ACTION, heartbeatRequest)
+			if err!=nil{
+				fmt.Println(util.RunFuncName(), " : ", err)
+				closeFlag<-1
+				return err
+			}
+		}
+	}
+	return nil
+}

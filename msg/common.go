@@ -1,6 +1,6 @@
 // @Author: liubai
 // @Date: 2020/5/7 10:08 下午
-// @Desc: use for what
+// @Desc: 公共的方法
 
 package msg
 
@@ -17,17 +17,17 @@ import (
 //todo 业务自行序列化sendMsg数据，只传入一个[]byte格式的sendMsg
 func SendMessage(rw *bufio.ReadWriter, action string, sendMsg interface{})error{
 	fmt.Println(util.RunFuncName(), action, sendMsg)
+
+	//todo 按照codeType序列化数据
 	RBdata, _ := json.Marshal(sendMsg)
 	sendBody := datas.BaseData{
 		Action: action,
 		BData: RBdata,
 		UserId:10001,
 	}
-	//bData, _ := json.Marshal(sendBody)
-	//再加工一次，
+
 	bData, _ := BuildData(1, sendBody)
 	n, err := rw.Write(bData)
-	//n, err := rw.Write([]byte{0, 0, 0, 3, 1, 3})
 	err1 := rw.Flush()
 	fmt.Println(util.RunFuncName(), "send data size: ", n, bData)
 	time.Sleep(time.Microsecond*10)

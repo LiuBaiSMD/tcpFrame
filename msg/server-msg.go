@@ -14,6 +14,8 @@ import (
 	"tcpPractice/util"
 )
 
+
+//tcp连接后处理消息的入口，进行数据解读以及消息分发
 func HandleConnection(conn net.Conn) {
 
 	//在登录成功后，将conn加入到conns连接池中,进行其他行为监听，
@@ -22,17 +24,17 @@ func HandleConnection(conn net.Conn) {
 	userClient := conns.NewClient(10001, conn, 10001)
 	conns.PushChan(10001, userClient)
 
-
+	//读取的数据通过chan交互
 	rw := bufio.NewReadWriter(bufio.NewReader(conn), bufio.NewWriter(conn))
 	codeTypeChan := make(chan int, 1)
 	bRawChan := make(chan []byte, 1)
 	closeFlag := make(chan int, 1)
-	//读取的数据通过chan交互
 
-	//监听消息
+
+	//监听tcp层发送的消息
 	go ReadMessage(rw, codeTypeChan, bRawChan, closeFlag)
 
-	//监听连接关闭信号，准备关闭连接
+	//监听连接关闭信号，如果发生错误，将关闭连接
 	go func(){
 		<-closeFlag
 		fmt.Println(util.RunFuncName(), "get wrong data, will close conn!")
