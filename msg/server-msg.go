@@ -25,7 +25,8 @@ func HandleConnection(conn net.Conn) {
 	rw := bufio.NewReadWriter(bufio.NewReader(conn), bufio.NewWriter(conn))
 	var recieveBytes []byte
 	readChan := make(chan []byte, 1024)
-	//done := make(chan int, 1)
+	codeTypeChan := make(chan int, 1)
+	bRawChan := make(chan []byte, 1)
 	closeFlag := make(chan int, 1)
 	//读取的数据通过chan交互
 
@@ -55,8 +56,10 @@ func HandleConnection(conn net.Conn) {
 			s := <- readChan
 			recieveBytes = util.BytesCombine(recieveBytes, s)
 			codeType, bRawData, err := ReadData(&recieveBytes)
+			fmt.Println(util.RunFuncName(), "get rawData: ", codeType, bRawData, err)
 			if codeType!=0 && len(bRawData) > 0{
-				fmt.Println(util.RunFuncName(), "rawData: ", codeType, bRawData, err )
+				codeTypeChan <- codeType
+				bRawChan <- bRawData
 			}
 		}
 	}()
@@ -67,15 +70,14 @@ func HandleConnection(conn net.Conn) {
 		conn.Close()
 		return
 	}()
-	//go BindBytesFromBuf(&recieveBytes, readChan, done, closeFlag)
 	//不断从recieveBytes读取数据解析
-	select{
+
+	for{
+		codeType := <- codeTypeChan
+		bRawData := <- bRawChan
+		fmt.Println(util.RunFuncName(), "will encode Data ", codeType, bRawData)
+		//todo 通过codeType解析数据，进行dispatch
 
 	}
-	//for{
-	//	<-done
-	//	err := ReadData(&recieveBytes)
-	//	fmt.Println(util.RunFuncName(), "rawData: ", recieveBytes, err)
-	//}
 }
 

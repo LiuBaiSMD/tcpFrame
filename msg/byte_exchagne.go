@@ -89,28 +89,25 @@ BData = {
 func ReadData(ioBuf *[]byte)(codeType int,bRawData []byte,err error){
 	fmt.Println("readData byte: ", ioBuf)
 	//使用for循环模拟一次完整的数据读取
-	for{
-		if len(*ioBuf)<=5{
-			break
-		}
-		//先读取一个lenthData 4个字节
-		lenthData := (*ioBuf)[0:4]
-		//读取编码格式codeType 1个字节
-		codeType := (*ioBuf)[4]
-		//根据lenthData 读取对应唱的的data
-		l := LenthToInt(lenthData)
-		//根据codeType 解析数据
-		if len(*ioBuf)<5+l{
-			fmt.Println("l: ", len(*ioBuf), l)
-			return 0, []byte(""), nil
-		}
-		fmt.Println("l: ", len(*ioBuf), l)
-		bRawData = (*ioBuf)[5:5+l]
-		*ioBuf = (*ioBuf)[5+l:]
-		fmt.Println("readData: ", lenthData, codeType, l, bRawData, *ioBuf)
-		fmt.Println("get data: ", string(bRawData))
-		break
+	if len(*ioBuf)<=5{
+		return 0, []byte(""), nil
 	}
+	//先读取一个lenthData 4个字节
+	lenthData := (*ioBuf)[0:4]
+	//读取编码格式codeType 1个字节
+	codeType = int((*ioBuf)[4])
+	//根据lenthData 读取对应唱的的data
+	l := LenthToInt(lenthData)
+	//根据codeType 解析数据
+	if len(*ioBuf)<5+l{
+		fmt.Println("l: ", len(*ioBuf), l)
+		return 0, []byte(""), nil
+	}
+	fmt.Println("l: ", len(*ioBuf), l)
+	bRawData = (*ioBuf)[5:5+l]
+	*ioBuf = (*ioBuf)[5+l:]
+	fmt.Println("readData: ", lenthData, codeType, l, bRawData, *ioBuf)
+	fmt.Println("get data: ", string(bRawData))
 	return int(codeType), bRawData, nil
 }
 
