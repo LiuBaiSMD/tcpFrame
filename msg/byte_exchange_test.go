@@ -18,13 +18,15 @@ import (
 var ioBuf []byte
 
 func Test_ExchangeData(t *testing.T) {
-	ioBuf, _ = msg.BuildData(1, datas.BaseData{Action:"test", UserId:10001})
+	ioBuf, _ = msg.BuildData(1, datas.BaseData{Action:"test", UserId:10001, BData:[]byte("Hello world!")})
 	ioBuf1, _ := msg.BuildData(1, datas.BaseData{Action:"tsetBuildData", UserId:10001})
 	for i:=0;i<len(ioBuf1);i++{
 		ioBuf = append(ioBuf, ioBuf1[i])
 	}
 	msg.IoBuf = ioBuf
 	fmt.Println(util.RunFuncName(), ioBuf)
-	msg.ReadData(&ioBuf)
-	msg.ReadData(&ioBuf)
+	codeType, bRawData, err :=msg.ReadData(&ioBuf)
+	fmt.Println(codeType, bRawData, err)
+	codeType, bRawData, err =msg.ReadData(&ioBuf)
+	fmt.Println(codeType, bRawData, err)
 }

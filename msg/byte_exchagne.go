@@ -10,12 +10,83 @@ package msg
 import (
 	"encoding/binary"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"tcpPractice/util"
 )
 var IoBuf []byte
-func ReadData(ioBuf *[]byte)error{
+
+/*
+## 6.改进数据包传输协议
+### ①增加组装传输数据的接口
+```
+总共分为两层
+1.(第一层解析)数据包长度dataLenth（32位 []byte）+ 编码类型codeType（8位 []byte）+ 数据data（[]byte）
+dataLenth:存储data长度
+codeType:基础解析格式，标识解析data的方式，json、proto等通用的格式
+data:数据内容
+
+2.(第二层解析)解析data模块，将data分解成各个类型json、proto等的BaseData后，其中的Action数据为指导业务层自行解析的模块，比如
+例① json中的BaseData结构:
+type BaseData struct{
+    Action string,
+    UserId int,
+    BData []byte,
+}
+
+json中的HeartBeat结构:
+type HeartBeat struct{
+    Action string,
+    UserId int,
+    TimeStamp int,
+    OtherMsg string,
+}
+
+例如在上述拆包过程中codeType=1代表json格式数据，将data解析为json的BaseData格式:得到以下数据
+data = {
+        Action:"Heartbeat",
+        UserId:10001,
+        BData:[12, 23, 45, 234, 54, 65],
+        }
+(第三层解析)然后业务层通过Action将指导BData解析为已经定义好的json结构 HeartBeat
+BData = {
+    Action: HeartBeat,
+    UserId: 10001,
+    TimeStamp: 123456789,
+    OtherMsg: "hello world!",
+}
+
+例②
+proto中的BaseData结构:
+message BaseData {
+    string Action = 1;
+    int64 UserId = 2;
+    bytes BData = 3;
+}
+
+proto中的HeartBeat结构:
+message HeartBeat {
+    string Action = 1;
+    int64 UserId = 2;
+    int64 TimeStamp = 3;
+    string OtherMsg = 4;
+}
+
+例如在上述拆包过程中codeType=2代表proto格式数据，将data解析为proto的BaseData格式:得到以下数据
+data = {
+        Action:"Heartbeat",
+        UserId:10001,
+        BData:[12, 23, 45, 234, 54, 65],
+        }
+(第三层解析)然后业务层通过Action将BData解析为已经定义好的proto结构 HeartBeat，
+BData = {
+    Action: HeartBeat,
+    UserId: 10001,
+    TimeStamp: 123456789,
+    OtherMsg: "hello world!",
+}
+*/
+
+func ReadData(ioBuf *[]byte)(codeType int,bRawData []byte,err error){
 	fmt.Println("readData byte: ", ioBuf)
 	//使用for循环模拟一次完整的数据读取
 	for{
@@ -31,19 +102,18 @@ func ReadData(ioBuf *[]byte)error{
 		//根据codeType 解析数据
 		if len(*ioBuf)<5+l{
 			fmt.Println("l: ", len(*ioBuf), l)
-			continue
+			return 0, []byte(""), nil
 		}
 		fmt.Println("l: ", len(*ioBuf), l)
-		bRawData := (*ioBuf)[5:5+l]
+		bRawData = (*ioBuf)[5:5+l]
 		*ioBuf = (*ioBuf)[5+l:]
 		fmt.Println("readData: ", lenthData, codeType, l, bRawData, *ioBuf)
 		fmt.Println("get data: ", string(bRawData))
 		break
 	}
-	return nil
+	return int(codeType), bRawData, nil
 }
 
-//11001100010010110111111011111000011011111011011
 //组装一个长度和编码类型到头部中去，根据codetype进行编码marshal rawdata
 func BuildData(codeType int,rawData interface{})([]byte, error){
 	//序列化rawData
@@ -63,7 +133,7 @@ func BuildData(codeType int,rawData interface{})([]byte, error){
 	//组装一个数据包
 	tbData := util.BytesCombine(lRawData, cRawData, bRawData)
 	fmt.Println("tbData: ", tbData)
-	return tbData, errors.New("test")
+	return tbData, nil
 }
 
 func DecodeData(rawData interface{})([]byte, error){
