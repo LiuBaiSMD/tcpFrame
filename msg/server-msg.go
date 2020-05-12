@@ -1,6 +1,6 @@
 // @Author: liubai
 // @Date: 2020/5/7 10:08 下午
-// @Desc: use for what
+// @Desc: 简单实现的服务器逻辑模块
 
 package msg
 
