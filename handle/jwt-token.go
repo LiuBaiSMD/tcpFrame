@@ -8,7 +8,7 @@ desc:   how to use or use for what
 package handle
 
 import (
-	"tcpPractice/proto"
+	"tcpPractice/datas/proto"
 	"context"
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
