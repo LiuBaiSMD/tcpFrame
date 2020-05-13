@@ -23,7 +23,7 @@
 ```
 
 # 系统结构图
-![Alt text](系统结构 "https://github.com/LiuBaiSMD/tcpFrame/blob/master/doc/TcpFrame.jpg?raw=true")
+![avatar](https://github.com/LiuBaiSMD/tcpFrame/blob/master/doc/TcpFrame.jpg?raw=true)
 
 ## 1.发送普通字符串二进制数据进行输出
 
