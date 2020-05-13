@@ -107,8 +107,6 @@ func ReadData(ioBuf *[]byte)(codeType int,bRawData []byte,err error){
 	fmt.Println("l: ", len(*ioBuf), l)
 	bRawData = (*ioBuf)[5:5+l]
 	*ioBuf = (*ioBuf)[5+l:]
-	fmt.Println("readData: ", lenthData, codeType, l, bRawData, *ioBuf)
-	fmt.Println("get data: ", string(bRawData))
 	return int(codeType), bRawData, nil
 }
 
@@ -123,11 +121,6 @@ func BuildData(codeType int,rawData interface{})([]byte, error){
 
 	//将序列化类型codeType序列化，长度为1的[]byte
 	cRawData := DecodeCodeType(int8(codeType))
-
-	fmt.Println("lenthData: ", lRawData)
-	fmt.Println("codeType: ", cRawData)
-	fmt.Println("rawData: ", bRawData)
-
 	//组装一个数据包
 	tbData := util.BytesCombine(lRawData, cRawData, bRawData)
 	fmt.Println("tbData: ", tbData)

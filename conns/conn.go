@@ -12,7 +12,7 @@ import (
 	"github.com/gogo/protobuf/proto"
 	"github.com/micro/go-micro/util/log"
 	"net"
-	"tcpPractice/proto"
+	"tcpPractice/datas/proto"
 )
 
 type ClientConn struct{
