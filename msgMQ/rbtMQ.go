@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"github.com/streadway/amqp"
 	"sync"
+	"tcpPractice/util"
 	"time"
 )
 
@@ -52,8 +53,10 @@ type QueueExchange struct {
 // 链接rabbitMQ
 func (r *RabbitMQ)mqConnect() {
 	var err error
-	RabbitUrl := fmt.Sprintf("amqp://%s:%s@%s:%d/", "guest", "guest", "******", 5673)
+	RabbitUrl := fmt.Sprintf("amqp://%s:%s@%s:%d/", "guest", "guest", "localhost", 5672)
 	mqConn, err = amqp.Dial(RabbitUrl)
+	fmt.Println("RabbitUrl: ", RabbitUrl)
+	fmt.Println(util.RunFuncName(), "err: ", err)
 	r.connection = mqConn   // 赋值给RabbitMQ对象
 	if err != nil {
 		fmt.Printf("MQ打开链接失败:%s \n", err)
@@ -110,6 +113,7 @@ func (r *RabbitMQ) RegisterProducer(producer Producer) {
 func (r *RabbitMQ) listenProducer(producer Producer) {
 	// 验证链接是否正常,否则重新链接
 	if r.channel == nil {
+		fmt.Println("mqConnect")
 		r.mqConnect()
 	}
 	// 用于检查队列是否存在,已经存在不需要重复声明
@@ -166,6 +170,7 @@ func (r *RabbitMQ) listenReceiver(receiver Receiver) {
 	defer r.mqClose()
 	// 验证链接是否正常
 	if r.channel == nil {
+		fmt.Println("mqConnect")
 		r.mqConnect()
 	}
 	// 用于检查队列是否存在,已经存在不需要重复声明

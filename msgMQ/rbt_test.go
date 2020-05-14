@@ -31,6 +31,9 @@ func Test_RabbitMq(t *testing.T){
 	mq.RegisterProducer(tp)
 	mq.RegisterReceiver(tp)
 	mq.Start()
+	select {
+
+	}
 }
 
 
