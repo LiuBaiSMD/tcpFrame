@@ -10,6 +10,8 @@ package util
 import (
 	"bytes"
 	"runtime"
+	"log"
+	"fmt"
 )
 
 func RunFuncName()string{
@@ -27,4 +29,11 @@ func BytesCombine(pBytes ...[]byte) []byte {
 	}
 	sep := []byte("")
 	return bytes.Join(s, sep)
+}
+
+func FailOnError(err error, msg string){
+	if err != nil {
+		log.Fatalf("%s:%s", msg, err)
+		panic(fmt.Sprintf("%s:%s", msg, err))
+	}
 }

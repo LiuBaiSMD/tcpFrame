@@ -5,10 +5,12 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"log"
 	"net"
 	"tcpPractice/conns"
+	"tcpPractice/datas"
 	"tcpPractice/msg"
 	"tcpPractice/util"
 	"time"
@@ -52,4 +54,22 @@ func testConn(){
 	}
 }
 
+func TestReconnect(connMap conns.ConnMap){
+	for{
+		fmt.Println("---->", util.RunFuncName())
+		time.Sleep(time.Second * 3)
+		connClinet := conns.GetConnByUId(10001)
+		if connClinet == nil{
+			continue
+		}
+		conn := connClinet.GetConn()
+		transData := datas.Request{
+			Action:"comunicate",
+			Name:"testReconnect",
+		}
+		rw := bufio.NewReadWriter(bufio.NewReader(conn), bufio.NewWriter(conn))
+		msg.SendMessage(rw, "comunicate", transData)
+		fmt.Println(util.RunFuncName(), "---->")
+	}
+}
 

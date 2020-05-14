@@ -10,4 +10,5 @@ require (
 	github.com/micro/go-micro v1.18.0
 	github.com/onsi/ginkgo v1.8.0 // indirect
 	github.com/onsi/gomega v1.5.0 // indirect
+	github.com/streadway/amqp v0.0.0-20200108173154-1c71cc93ed71
 )
