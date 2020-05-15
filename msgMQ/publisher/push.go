@@ -8,8 +8,9 @@ package main
 
 import (
 	"github.com/streadway/amqp"
-	"tcpPractice/util"
+	"fmt"
 	"time"
+	"tcpPractice/util"
 )
 
 func main(){
@@ -29,19 +30,25 @@ func main(){
 	util.FailOnError(err, "Failed to declare q queue")
 
 	body := "Hello1"
+	count := 1
+	start := time.Now().Unix()
 	for{
-		time.Sleep(time.Second * 2)
+		count++
 		err = ch.Publish(
 			"",     //exchange
-			q.Name,     // routing key
+			 q.Name,     // routing key
 			false,  //mandatory
 			false, //immediate
 			amqp.Publishing{
 				ContentType: "text/plain",
 				Body :      []byte(body),
 			})
-
-		util.FailOnError(err, "Failed to publish a message")
+		if count >1000000{
+			break
+		}
+		//util.FailOnError(err, "Failed to publish a message")
 	}
-
+	end := time.Now().Unix()
+	speed := (end-start)
+	fmt.Println("push speed: ",start, end, speed)
 }

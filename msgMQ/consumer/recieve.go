@@ -8,8 +8,10 @@ package main
 
 import (
 	"github.com/streadway/amqp"
+	"time"
 	"log"
 	"tcpPractice/util"
+	"fmt"
 )
 
 func main() {
@@ -45,8 +47,16 @@ func main() {
 	forever := make(chan bool)
 
 	go func() {
+		count:=1
+		start := time.Now().Unix()
 		for d := range msgs {
+			count++
 			log.Printf("Received a message : %s", d.Body)
+			if count>1000000{
+				end := time.Now().Unix()
+				speed := (end-start)
+				fmt.Println("consume speed: ",start , end, speed)
+			}
 		}
 	}()
 
