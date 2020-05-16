@@ -8,9 +8,9 @@ import (
 	"bufio"
 	"fmt"
 	"net"
-	"tcpPractice/datas"
-	"tcpPractice/registry"
-	"tcpPractice/util"
+	"tcpFrame/datas"
+	"tcpFrame/registry"
+	"tcpFrame/util"
 )
 
 var register *registry.Base

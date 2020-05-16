@@ -9,8 +9,8 @@ package conns
 
 import (
 	"fmt"
-	_const "tcpPractice/const"
-	"tcpPractice/util"
+	_const "tcpFrame/const"
+	"tcpFrame/util"
 	"time"
 )
 

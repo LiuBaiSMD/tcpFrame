@@ -27,7 +27,6 @@ func InitRedis(Password, redisUrl string, DB int) *redis.Client { //InitTokenRed
 	return rdsConn
 }
 
-
 func SaveUserToken(userId , tokenStr string)error{
 	//保存用户token与userId
 	fmt.Println("set user conn ", userId)

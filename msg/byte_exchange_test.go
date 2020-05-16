@@ -9,10 +9,10 @@ package msg_test
 
 import (
 	"fmt"
-	"tcpPractice/util"
+	"tcpFrame/util"
 	"testing"
-	"tcpPractice/msg"
-	"tcpPractice/datas"
+	"tcpFrame/msg"
+	"tcpFrame/datas"
 )
 
 var ioBuf []byte

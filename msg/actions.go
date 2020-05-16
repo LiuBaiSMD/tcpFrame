@@ -9,10 +9,10 @@ package msg
 import (
 	"bufio"
 	"github.com/micro/go-micro/util/log"
-	"tcpPractice/conns"
-	"tcpPractice/datas"
-	"tcpPractice/registry"
-	"tcpPractice/util"
+	"tcpFrame/conns"
+	"tcpFrame/datas"
+	"tcpFrame/registry"
+	"tcpFrame/util"
 )
 
 type ServerRfAddr struct {

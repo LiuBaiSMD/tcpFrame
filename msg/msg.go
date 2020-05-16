@@ -9,9 +9,9 @@ import (
 	"fmt"
 	"encoding/json"
 	"net"
-	"tcpPractice/conns"
-	"tcpPractice/datas"
-	"tcpPractice/util"
+	"tcpFrame/conns"
+	"tcpFrame/datas"
+	"tcpFrame/util"
 )
 
 

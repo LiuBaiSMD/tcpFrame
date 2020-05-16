@@ -8,8 +8,8 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
-	"tcpPractice/datas"
-	"tcpPractice/util"
+	"tcpFrame/datas"
+	"tcpFrame/util"
 	"time"
 )
 

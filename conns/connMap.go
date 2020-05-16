@@ -12,8 +12,8 @@ package conns
 import (
 	"fmt"
 	"sync"
-	"tcpPractice/dao"
-	"tcpPractice/util"
+	"tcpFrame/dao"
+	"tcpFrame/util"
 	"time"
 )
 
@@ -67,8 +67,6 @@ func GetConnByUId(connId int)*ClientConn{
 
 func DelConnById(cId int){
 	//先断开连接
-	conn := GetConnByUId(cId)
-	conn.GetConn().Close()
 	cMap.connMap.Delete(cId)
 	delete(cMap.connLiveMap, cId)
 

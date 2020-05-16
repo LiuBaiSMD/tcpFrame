@@ -9,10 +9,10 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"tcpPractice/conns"
-	"tcpPractice/datas"
-	"tcpPractice/msg"
-	"tcpPractice/util"
+	"tcpFrame/conns"
+	"tcpFrame/datas"
+	"tcpFrame/msg"
+	"tcpFrame/util"
 	"time"
 )
 

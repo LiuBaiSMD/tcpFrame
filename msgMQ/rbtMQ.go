@@ -10,10 +10,21 @@ import (
 	"fmt"
 	"github.com/streadway/amqp"
 	"sync"
-	"tcpPractice/util"
+	"tcpFrame/util"
 	"time"
 )
 
+type RabbitMQ struct {
+	connection *amqp.Connection
+	channel *amqp.Channel
+	queueName   string            // 队列名称
+	routingKey  string            // key名称
+	exchangeName string           // 交换机名称
+	exchangeType string           // 交换机类型
+	producerList []Producer
+	receiverList []Receiver
+	mu  sync.RWMutex
+}
 
 
 // 定义全局变量,指针类型
@@ -29,19 +40,6 @@ type Receiver interface {
 	Consumer([]byte)    error
 }
 
-// 定义RabbitMQ对象
-type RabbitMQ struct {
-	connection *amqp.Connection
-	channel *amqp.Channel
-	queueName   string            // 队列名称
-	routingKey  string            // key名称
-	exchangeName string           // 交换机名称
-	exchangeType string           // 交换机类型
-	producerList []Producer
-	receiverList []Receiver
-	mu  sync.RWMutex
-}
-
 // 定义队列交换机对象
 type QueueExchange struct {
 	QuName  string           // 队列名称
@@ -53,7 +51,7 @@ type QueueExchange struct {
 // 链接rabbitMQ
 func (r *RabbitMQ)mqConnect() {
 	var err error
-	RabbitUrl := fmt.Sprintf("amqp://%s:%s@%s:%d/", "guest", "guest", "localhost", 5672)
+	RabbitUrl := fmt.Sprintf("amqp://%s:%s@%s:%d", "guest", "guest", "localhost", 5672)
 	mqConn, err = amqp.Dial(RabbitUrl)
 	fmt.Println("RabbitUrl: ", RabbitUrl)
 	fmt.Println(util.RunFuncName(), "err: ", err)
@@ -101,7 +99,7 @@ func (r *RabbitMQ) Start() {
 	for _, receiver := range r.receiverList {
 		go r.listenReceiver(receiver)
 	}
-	time.Sleep(1*time.Second)
+	time.Sleep(10*time.Second)
 }
 
 // 注册发送指定队列指定路由的生产者
@@ -119,6 +117,7 @@ func (r *RabbitMQ) listenProducer(producer Producer) {
 	// 用于检查队列是否存在,已经存在不需要重复声明
 	_, err := r.channel.QueueDeclarePassive(r.queueName, true,false,false,true,nil)
 	if err != nil{
+		fmt.Println(util.RunFuncName(), " err: ", err)
 		// 队列不存在,声明队列
 		// name:队列名称;durable:是否持久化,队列存盘,true服务重启后信息不会丢失,影响性能;autoDelete:是否自动删除;noWait:是否非阻塞,
 		// true为是,不等待RMQ返回信息;args:参数,传nil即可;exclusive:是否设置排他

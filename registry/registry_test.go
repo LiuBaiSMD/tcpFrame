@@ -8,9 +8,9 @@ import (
 	"bufio"
 	"fmt"
 	"github.com/micro/go-micro/util/log"
-	"tcpPractice/datas"
-	"tcpPractice/registry"
-	"tcpPractice/util"
+	"tcpFrame/datas"
+	"tcpFrame/registry"
+	"tcpFrame/util"
 	"testing"
 )
 

@@ -1,4 +1,4 @@
-module tcpPractice
+module tcpFrame
 
 go 1.14
 

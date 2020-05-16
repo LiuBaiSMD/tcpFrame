@@ -10,10 +10,10 @@ import (
 	"fmt"
 	"net"
 	"os"
-	"tcpPractice/const"
-	"tcpPractice/datas"
-	"tcpPractice/msg"
-	"tcpPractice/util"
+	"tcpFrame/const"
+	"tcpFrame/datas"
+	"tcpFrame/msg"
+	"tcpFrame/util"
 	"time"
 )
 

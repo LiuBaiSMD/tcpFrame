@@ -8,7 +8,7 @@ package msgMQ_test
 
 import (
 	"fmt"
-	"tcpPractice/msgMQ"
+	"tcpFrame/msgMQ"
 	"testing"
 )
 

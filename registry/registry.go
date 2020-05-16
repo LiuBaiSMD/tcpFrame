@@ -10,7 +10,7 @@ import (
 	"bufio"
 	"fmt"
 	"reflect"
-	"tcpPractice/datas"
+	"tcpFrame/datas"
 )
 type ControllerMapsType map[string]reflect.Value
 type HttpWR  func(w *bufio.ReadWriter,BData datas.BaseData) error
