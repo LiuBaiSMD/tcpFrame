@@ -6,15 +6,27 @@
 
 package msgMQ
 
+var (
+	RabbitMQMap map[string]*RabbitMQAMQP //使用serviceName， RabbitMq作为数据存储
+)
 
-var RabbitMq RabbitMQAMQP
 func init(){
-	RabbitMq = RabbitMQAMQP{
-		rbtname: "guest",
-		passwd: "guest",
-		ipAddr: "localhost",
-		port: 5672,
+	RabbitMQMap = make(map[string]*RabbitMQAMQP)
+	err:=NewRabbitMQAMQP("server1", "guest", "guest", "localhost", 5672)
+	if err!=nil{
+		panic(err)
+	}
+}
+
+func NewRabbitMQAMQP(rbtServiceName, rbtname, passwd, ipAddr string, port int)error{
+	rabbitAMQP := RabbitMQAMQP{
+		rbtname: rbtname,
+		passwd: passwd,
+		ipAddr: ipAddr,
+		port: port,
 		exchangeMap:make(map[string]ExchangeAMQP),
 	}
-	RabbitMq.connect()
+	err := rabbitAMQP.connect()
+	RabbitMQMap[rbtServiceName] = &rabbitAMQP
+	return err
 }

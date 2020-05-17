@@ -14,9 +14,7 @@ import (
 	"tcpFrame/util"
 )
 
-var (
-	RabbitMQMap map[string]RabbitMQ //使用serviceName， RabbitMq作为数据存储
-)
+
 
 // 定义RabbitMQ对象
 type RabbitMQAMQP struct {
