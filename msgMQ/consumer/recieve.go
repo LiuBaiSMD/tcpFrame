@@ -70,7 +70,7 @@ func main() {
 		fmt.Println("err1: ", err1)
 		msgs, err1 := ch.Consume(
 			q.Name, // queue
-			"consumer13",     // consumer
+			"consumer122",     // consumer
 			true,   // auto-ack
 			false,  // exclusive
 			false,  // no-local

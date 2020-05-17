@@ -65,13 +65,13 @@ func main(){
 	}()
 
 	util.FailOnError(err, "Failed to declare q queue")
-	err =  ch.ExchangeDeclare(exchangeName1, exchangeType1, true, false, false, true, nil)
+	err =  ch.ExchangeDeclare(exchangeName1+"2", exchangeType1, true, false, false, true, nil)
 	if err != nil {
 		fmt.Printf("MQ注册交换机失败:%s \n", err)
 		return
 	}
 	// 绑定任务
-	err =  ch.QueueBind(queueName1, routeKey1, exchangeName1, true, nil)
+	err =  ch.QueueBind(queueName1+"2", routeKey1, exchangeName1+"2", true, nil)
 	if err != nil {
 		fmt.Printf("绑定队列失败:%s \n", err)
 		return
@@ -83,7 +83,7 @@ func main(){
 		count++
 		time.Sleep(time.Second * 2)
 		err = ch.Publish(
-			exchangeName1,     //exchange
+			exchangeName1+"2",     //exchange
 			routeKey1,     // routing key
 			false,  //mandatory
 			false, //immediate
