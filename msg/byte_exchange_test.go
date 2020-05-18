@@ -25,8 +25,8 @@ func Test_ExchangeData(t *testing.T) {
 	}
 	msg.IoBuf = ioBuf
 	fmt.Println(util.RunFuncName(), ioBuf)
-	codeType, bRawData, err :=msg.ReadData(&ioBuf)
+	codeType, bRawData, err :=msg.ParseBaseHeaderData(&ioBuf)
 	fmt.Println(codeType, bRawData, err)
-	codeType, bRawData, err =msg.ReadData(&ioBuf)
+	codeType, bRawData, err =msg.ParseBaseHeaderData(&ioBuf)
 	fmt.Println(codeType, bRawData, err)
 }

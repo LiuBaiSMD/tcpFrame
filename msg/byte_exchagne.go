@@ -87,8 +87,8 @@ BData = {
 */
 
 //从本地[]byte缓存解析出完整的原始[]byte数据包
-func ReadData(ioBuf *[]byte)(codeType int,bRawData []byte,err error){
-	fmt.Println("readData byte: ", ioBuf)
+func ParseBaseHeaderData(ioBuf *[]byte)(codeType int,bRawData []byte,err error){
+	fmt.Println("ParseBaseHeaderData byte: ", ioBuf)
 	//使用for循环模拟一次完整的数据读取
 	if len(*ioBuf)<=5{
 		return 0, []byte(""), nil
