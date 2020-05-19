@@ -88,8 +88,8 @@ BData = {
 */
 
 //从本地[]byte缓存解析出完整的原始[]byte数据包 headerLen, msgLen
-func Parse2HeaderData(ioBuf *[]byte) (headerBytes, msgBytes []byte, err error) {
-	fmt.Println("Parse2HeaderData byte: ", ioBuf)
+func Parse2HeaderAndMsg(ioBuf *[]byte) (headerBytes, msgBytes []byte, err error) {
+	fmt.Println("Parse2HeaderAndMsg byte: ", ioBuf)
 	//使用for循环模拟一次完整的数据读取
 	if len(*ioBuf) <= (2 * _const.LEN_INFO_BYTE_SIZE) {
 		return []byte(""), []byte(""), nil

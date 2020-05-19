@@ -142,7 +142,7 @@ func ReadMessage(rw *bufio.ReadWriter, headBytesChan chan []byte, msgBytesChan c
 	for {
 		s := <-readChan
 		recieveBytes = util.BytesCombine(recieveBytes, s)
-		headerBytes, msgBytes, err := Parse2HeaderData(&recieveBytes)
+		headerBytes, msgBytes, err := Parse2HeaderAndMsg(&recieveBytes)
 		fmt.Println(util.RunFuncName(), "get rawData: ", headerBytes, msgBytes, err)
 
 		if len(headerBytes) > 0 && len(msgBytes) > 0 {

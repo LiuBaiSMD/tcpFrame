@@ -80,14 +80,14 @@ func Test_ParseMsg(t *testing.T) {
 
 	msg.IoBuf = ioBuf
 	fmt.Println(util.RunFuncName(), ioBuf)
-	codeType, bRawData, err := msg.Parse2HeaderData(&ioBuf)
+	codeType, bRawData, err := msg.Parse2HeaderAndMsg(&ioBuf)
 	fmt.Println(codeType, bRawData, err)
 	//故意加入一个字符串进行解析，
 	ioBuf = util.BytesCombine(ioBuf, []byte("hello world!"))
-	codeType, bRawData, err = msg.Parse2HeaderData(&ioBuf)
+	codeType, bRawData, err = msg.Parse2HeaderAndMsg(&ioBuf)
 	fmt.Println(codeType, bRawData, err)
 	fmt.Println(string(ioBuf))
-	codeType, bRawData, err = msg.Parse2HeaderData(&ioBuf)
+	codeType, bRawData, err = msg.Parse2HeaderAndMsg(&ioBuf)
 	fmt.Println(codeType, bRawData, err)
 
 }
@@ -100,6 +100,7 @@ func Test_protoChange(t *testing.T) {
 		Version: "v1.1.1",
 	}
 	changeProto(protoMsg)
+
 }
 
 func changeProto(msgProto proto.Message) {
@@ -110,4 +111,5 @@ func changeProto(msgProto proto.Message) {
 	hp := &heartbeat.LoginRespone{}
 	err = proto.Unmarshal(pb, hp)
 	fmt.Println(util.RunFuncName(), "err: ", err, "msgProto: ", hp.Version)
+
 }
