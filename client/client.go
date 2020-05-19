@@ -62,7 +62,7 @@ func Heartbeat(userId int, conn net.Conn, closeFlag chan int)error{
 				Password:"123456",
 				Token:"abcdefghigjk",
 				LoginType:1,
-				Version:1,
+				Version:"v1.0.1",
 			}
 			err := msg.SendMessage(rw, _const.CMD_HEARTBEAT, _const.BT_LOGIN_REQ, req)
 			if err!=nil{

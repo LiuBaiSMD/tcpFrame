@@ -17,15 +17,48 @@ message RequestHeader {
 }
 
 message LoginRequest {
-  string user_name = 1;
-  string password = 2;
-  string token = 3;
-  uint32 login_type = 4;
-  uint32 version = 5;
+  int64 user_id = 1;
+  uint32 cmd_no = 2;
+  string user_name = 3;
+  string password = 4;
+  string token = 5;
+  uint32 login_type = 6;
+  string version = 7;
 }
 
 message LoginRespone {
-  uint32 code = 1;
-  uint32 login_state = 2;
-  string oms = 3;
+  int64 user_id = 1;
+  uint32 cmd_no = 2;
+  uint32 code = 3;
+  uint32 login_state = 4;
+  string oms = 5;
+  string version = 6;
+}
+
+message HeartBeatReq {
+  int64 user_id = 1;
+  uint32 cmd_no = 2;
+  string version = 3;
+}
+
+message HeartBeatRsp {
+  int64 user_id = 1;
+  uint32 cmd_no = 2;
+  int64 code = 3;
+  string version = 4;
+}
+
+message CommunicateReq {
+  int64 user_id = 1;
+  uint32 cmd_no = 2;
+  string version = 3;
+  string message = 4;
+}
+
+message CommunicateRsp {
+  int64 user_id = 1;
+  uint32 cmd_no = 2;
+  int64 code = 3;
+  string version = 4;
+
 }

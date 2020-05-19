@@ -21,7 +21,7 @@ func Test_RequestMinLen(t *testing.T) {
 		Password:"123456",
 		Token:"abcdefghigjk",
 		LoginType:1,
-		Version:1,
+		Version:"v1.0.1",
 	}
 	pb, err := GetRequestByte(1, 1, "v1.1.1", p)
 	fmt.Println(util.RunFuncName(), "pb: ", pb, "\nerr: ", err)
