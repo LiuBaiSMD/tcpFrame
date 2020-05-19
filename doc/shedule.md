@@ -29,5 +29,6 @@ consumerabbit->queueName
 
 ## 5.19完成
 ```
-完成msg模块使用json数据交互
+①完成msg模块使用json数据交互
+②增加datas/proto的数据格式
 ```

@@ -9,11 +9,11 @@ package registry
 import (
 	"bufio"
 	"fmt"
+	"github.com/golang/protobuf/proto"
 	"reflect"
-	"tcpFrame/datas"
 )
 type ControllerMapsType map[string]reflect.Value
-type HttpWR  func(w *bufio.ReadWriter,BData datas.BaseData) error
+type HttpWR  func(w *bufio.ReadWriter,BData proto.Message) error
 type Base struct{
 	CrMap ControllerMapsType
 	FuncRegistry map[string] HttpWR

@@ -11,7 +11,6 @@ import (
 	"net"
 	"os"
 	"tcpFrame/const"
-	"tcpFrame/datas"
 	"tcpFrame/datas/proto"
 	"tcpFrame/msg"
 	"tcpFrame/util"
@@ -31,12 +30,6 @@ func Open(addr string) (*bufio.ReadWriter, net.Conn, error) {
 var userId = 10001
 var done chan int
 var connClose chan int
-var loginData = datas.Request{
-	Action:_const.LOGIN_ACTION,
-	Name:_const.LOGIN_AUTH,
-	PWD:"123456",
-	UserId:userId,
-}
 
 func main() {
 	_, conn, err := Open("127.0.0.1:8080")
