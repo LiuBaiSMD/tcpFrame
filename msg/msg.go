@@ -10,10 +10,17 @@ import (
 	"github.com/golang/protobuf/proto"
 	"net"
 	"tcpFrame/conns"
+	"tcpFrame/const"
 	"tcpFrame/datas/proto"
+	"tcpFrame/registry"
 	"tcpFrame/util"
+	"time"
 )
-
+var register *registry.Base
+func init(){
+	var rfaddr1 ServerRfAddr
+	register = registry.Registery(&rfaddr1)
+}
 
 //tcp连接后处理消息的入口，进行数据解读以及消息分发
 func HandleConnection(conn net.Conn) {
@@ -57,8 +64,18 @@ func HandleConnection(conn net.Conn) {
 			fmt.Println("get wrong header: ", string(headBytes))
 			closeFlag<-1
 		}
+		fmt.Println(util.RunFuncName(), "get header: ", header)
 		//todo 根据codeType实现反序列化bRawData的interface{}，将encoding部分脱离出去
-		if header.CmdNo==1{
+		if int(header.CmdNo)==_const.CMD_LOGIN_REQ{
+			msg := &heartbeat.LoginRequest{}
+			err := proto.Unmarshal(msgBytes, msg)
+			if err !=nil{
+				//协议出错断开连接
+				fmt.Println("get wrong rawData: ", string(msgBytes))
+				closeFlag<-1
+			}
+			fmt.Println(util.RunFuncName(), "proto: ", msg)
+		}else if int(header.CmdNo)==_const.CMD_HEARTBEAT{
 			msg := &heartbeat.LoginRequest{}
 			err := proto.Unmarshal(msgBytes, msg)
 			if err !=nil{
@@ -69,5 +86,68 @@ func HandleConnection(conn net.Conn) {
 			fmt.Println(util.RunFuncName(), "proto: ", msg)
 		}
 		//todo 通过codeType解析数据，进行dispatch
+	}
+}
+
+//todo 根据codeType实现封装序列化sendBody的interface{}，将decoding部分脱离出去
+//todo 业务自行序列化sendMsg数据，只传入一个[]byte格式的sendMsg
+func SendMessage(rw *bufio.ReadWriter, cmdNo, bodyType int, sendMsg proto.Message) error {
+	fmt.Println(util.RunFuncName(), cmdNo, sendMsg)
+
+	//todo 按照codeType序列化数据
+	sendHeader := &heartbeat.RequestHeader{
+		CmdNo:      uint32(cmdNo),
+		BodyLength: uint32(proto.Size(sendMsg)),
+		BodyType:   uint32(bodyType),
+		Version:    "v1.0.1",
+	}
+	headerBytes, _ := proto.Marshal(sendHeader)
+	msgBytes, _ := proto.Marshal(sendMsg)
+	bData, _ := BuildData(headerBytes, msgBytes)
+	n, err := rw.Write(bData)
+	err1 := rw.Flush()
+	fmt.Println(util.RunFuncName(), "send data size: ", n, bData)
+	time.Sleep(time.Microsecond * 10)
+	if err != nil || err1 != nil {
+		fmt.Println(util.RunFuncName(), "have err ", err)
+		return err
+	}
+	return nil
+}
+
+func ReadMessage(rw *bufio.ReadWriter, headBytesChan chan []byte, msgBytesChan chan []byte, closeFlag chan int) {
+	var recieveBytes []byte
+
+	readChan := make(chan []byte, 1024)
+	//从tcp iobuf中读取数据放入readChan中
+	go func() {
+		for {
+			bData := make([]byte, 1024)
+			n, err := rw.Read(bData)
+			fmt.Println(util.RunFuncName(), "get data size: ", n)
+			if err != nil {
+				fmt.Println("链接无法读取，连接关闭。", err)
+				closeFlag <- 1
+				return
+			}
+			if n > 0 {
+				bData = bData[:n]
+				readChan <- bData
+				fmt.Println(util.RunFuncName(), "get data: ", bData)
+			}
+		}
+	}()
+
+	//将上面方法读取的数据存入本地缓存recieveBytes中
+	for {
+		s := <-readChan
+		recieveBytes = util.BytesCombine(recieveBytes, s)
+		headerBytes, msgBytes, err := Parse2HeaderData(&recieveBytes)
+		fmt.Println(util.RunFuncName(), "get rawData: ", headerBytes, msgBytes, err)
+
+		if len(headerBytes) > 0 && len(msgBytes) > 0 {
+			headBytesChan <- headerBytes
+			msgBytesChan <- msgBytes
+		}
 	}
 }
