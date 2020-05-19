@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"github.com/golang/protobuf/proto"
 	"tcpFrame/datas/proto"
+	"tcpFrame/msg"
 	"tcpFrame/util"
 	"testing"
 )
@@ -33,6 +34,7 @@ func Test_RequestMinLen(t *testing.T) {
 	fmt.Println("bp: ", bp, pbb)
 
 }
+
 func GetRequestByte(cmdNo, bodyType uint32, version string, body proto.Message) ([]byte, error){
 	header := &heartbeat.RequestHeader{
 		CmdNo:      cmdNo,
@@ -50,4 +52,38 @@ func GetRequestByte(cmdNo, bodyType uint32, version string, body proto.Message) 
 	rb := util.BytesCombine(hb, db)
 	fmt.Println(util.RunFuncName(), " rb: ", rb)
 	return rb, err
+}
+
+var ioBuf []byte
+
+func Test_ExchangeData(t *testing.T) {
+	msgBody := &heartbeat.LoginRequest{
+		UserName:"wuxun",
+		Password:"123456",
+		LoginType:1,
+	}
+	msgBytes, _ := proto.Marshal(msgBody)
+
+	sendHeader := &heartbeat.RequestHeader{
+		CmdNo:      1,
+		BodyLength: uint32(proto.Size(msgBody)),
+		BodyType:   1,
+		Version:    "v1.0.1",
+	}
+	headerBytes, _ := proto.Marshal(sendHeader)
+
+	ioBuf, _ = msg.BuildData(headerBytes, msgBytes)
+	ioBuf1, _ := msg.BuildData(headerBytes, msgBytes)
+	for i:=0;i<len(ioBuf1);i++{
+		ioBuf = append(ioBuf, ioBuf1[i])
+	}
+
+	msg.IoBuf = ioBuf
+	fmt.Println(util.RunFuncName(), ioBuf)
+	codeType, bRawData, err :=msg.Parse2HeaderData(&ioBuf)
+	fmt.Println(codeType, bRawData, err)
+	codeType, bRawData, err =msg.Parse2HeaderData(&ioBuf)
+	fmt.Println(codeType, bRawData, err)
+
+
 }
