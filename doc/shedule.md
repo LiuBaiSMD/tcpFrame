@@ -32,3 +32,9 @@ consumerabbit->queueName
 ①完成msg模块使用json数据交互
 ②增加datas/proto的数据格式
 ```
+
+## 5.19计划
+```
+1.增加专门的解释器通过cmdNo解析[]bytes为具体的proto格式
+2.开始测试使用rabbitmq、查看nats
+```
