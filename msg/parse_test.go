@@ -56,7 +56,7 @@ func GetRequestByte(cmdNo, bodyType uint32, version string, body proto.Message) 
 
 var ioBuf []byte
 
-func Test_ExchangeData(t *testing.T) {
+func Test_ParseMsg(t *testing.T) {
 	msgBody := &heartbeat.LoginRequest{
 		UserName:"wuxun",
 		Password:"123456",
@@ -73,6 +73,7 @@ func Test_ExchangeData(t *testing.T) {
 	headerBytes, _ := proto.Marshal(sendHeader)
 
 	ioBuf, _ = msg.BuildData(headerBytes, msgBytes)
+	//加入两个结构体，模拟粘包
 	ioBuf1, _ := msg.BuildData(headerBytes, msgBytes)
 	for i:=0;i<len(ioBuf1);i++{
 		ioBuf = append(ioBuf, ioBuf1[i])
@@ -82,8 +83,12 @@ func Test_ExchangeData(t *testing.T) {
 	fmt.Println(util.RunFuncName(), ioBuf)
 	codeType, bRawData, err :=msg.Parse2HeaderData(&ioBuf)
 	fmt.Println(codeType, bRawData, err)
+	//故意加入一个字符串进行解析，
+	ioBuf = util.BytesCombine(ioBuf, []byte("hello world!"))
 	codeType, bRawData, err =msg.Parse2HeaderData(&ioBuf)
 	fmt.Println(codeType, bRawData, err)
-
+	fmt.Println(string(ioBuf))
+	codeType, bRawData, err =msg.Parse2HeaderData(&ioBuf)
+	fmt.Println(codeType, bRawData, err)
 
 }
