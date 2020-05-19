@@ -7,10 +7,10 @@ package msg
 import (
 	"bufio"
 	"fmt"
-	"encoding/json"
+	"github.com/golang/protobuf/proto"
 	"net"
 	"tcpFrame/conns"
-	"tcpFrame/datas"
+	"tcpFrame/datas/proto"
 	"tcpFrame/util"
 )
 
@@ -26,13 +26,13 @@ func HandleConnection(conn net.Conn) {
 
 	//读取的数据通过chan交互
 	rw := bufio.NewReadWriter(bufio.NewReader(conn), bufio.NewWriter(conn))
-	codeTypeChan := make(chan int, 1)
-	bRawChan := make(chan []byte, 1)
+	headBytesChan := make(chan []byte, 1)
+	msgBytesChan := make(chan []byte, 1)
 	closeFlag := make(chan int, 1)
 
 
 	//监听tcp层发送的消息
-	go ReadMessage(rw, codeTypeChan, bRawChan, closeFlag)
+	go ReadMessage(rw, headBytesChan, msgBytesChan, closeFlag)
 
 	//监听连接关闭信号，如果发生错误，将关闭连接
 	go func(){
@@ -46,19 +46,27 @@ func HandleConnection(conn net.Conn) {
 	for{
 
 		//监听rawData数据
-		codeType := <- codeTypeChan
-		bRawData := <- bRawChan
-		fmt.Println(util.RunFuncName(), "will encode Data ", codeType, bRawData)
+		headBytes := <- headBytesChan
+		msgBytes := <- msgBytesChan
+		fmt.Println(util.RunFuncName(), "will encode Data ", headBytes, msgBytes)
 
+		header := &heartbeat.RequestHeader{}
+		err := proto.Unmarshal(headBytes, header)
+		if err!=nil{
+			//协议出错断开连接
+			fmt.Println("get wrong header: ", string(headBytes))
+			closeFlag<-1
+		}
 		//todo 根据codeType实现反序列化bRawData的interface{}，将encoding部分脱离出去
-		if codeType==1 && len(bRawData)>0{
-			var rawData datas.BaseData
-			err := json.Unmarshal(bRawData, &rawData)
+		if header.CmdNo==1{
+			msg := &heartbeat.LoginRequest{}
+			err := proto.Unmarshal(msgBytes, msg)
 			if err !=nil{
 				//协议出错断开连接
-				fmt.Println("get wrong rawData: ", string(bRawData))
+				fmt.Println("get wrong rawData: ", string(msgBytes))
 				closeFlag<-1
 			}
+			fmt.Println(util.RunFuncName(), "proto: ", msg)
 		}
 		//todo 通过codeType解析数据，进行dispatch
 	}

@@ -12,6 +12,7 @@ import (
 	"os"
 	"tcpFrame/const"
 	"tcpFrame/datas"
+	"tcpFrame/datas/proto"
 	"tcpFrame/msg"
 	"tcpFrame/util"
 	"time"
@@ -56,12 +57,14 @@ func Heartbeat(userId int, conn net.Conn, closeFlag chan int)error{
 	for{
 		select {
 		case <- timer.C:
-			heartbeatRequest := datas.Request{
-				Action: _const.HEARTBEAT_ACTION,
-				//Action: "testheartbeat",
-				UserId:	userId,
+			req := &heartbeat.LoginRequest{
+				UserName:"wuxun",
+				Password:"123456",
+				Token:"abcdefghigjk",
+				LoginType:1,
+				Version:1,
 			}
-			err := msg.SendMessage(rw, _const.HEARTBEAT_ACTION, heartbeatRequest)
+			err := msg.SendMessage(rw, _const.CMD_HEARTBEAT, _const.BT_LOGIN_REQ, req)
 			if err!=nil{
 				fmt.Println(util.RunFuncName(), " : ", err)
 				closeFlag<-1

@@ -11,10 +11,11 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	"github.com/golang/protobuf/proto"
+	"tcpFrame/const"
 	"tcpFrame/util"
-	proto "github.com/golang/protobuf/proto"
-
 )
+
 var IoBuf []byte
 
 /*
@@ -88,56 +89,63 @@ BData = {
 }
 */
 
-//从本地[]byte缓存解析出完整的原始[]byte数据包
-func ParseBaseHeaderData(ioBuf *[]byte)(codeType int,bRawData []byte,err error){
+//从本地[]byte缓存解析出完整的原始[]byte数据包 headerLen, msgLen
+func ParseBaseHeaderData(ioBuf *[]byte) (headerBytes, msgBytes []byte, err error) {
 	fmt.Println("ParseBaseHeaderData byte: ", ioBuf)
 	//使用for循环模拟一次完整的数据读取
-	if len(*ioBuf)<=5{
-		return 0, []byte(""), nil
+	if len(*ioBuf) <= (2 * _const.LEN_INFO_BYTE_SIZE) {
+		return []byte(""), []byte(""), nil
 	}
+	offset := 0
 	//先读取一个lenthData 4个字节
-	lenthData := (*ioBuf)[0:4]
-	//读取编码格式codeType 1个字节
-	codeType = int((*ioBuf)[4])
-	//根据lenthData 读取对应唱的的data
-	l := LenthToInt(lenthData)
-	//根据codeType 解析数据，如果数据长度不够，则不作处理，返回空值不报错
-	if len(*ioBuf)<5+l{
-		fmt.Println("l: ", len(*ioBuf), l)
-		return 0, []byte(""), nil
+	headerLen := int(EncodeLenthByte((*ioBuf)[offset : offset+_const.LEN_INFO_BYTE_SIZE]))
+	//读取编码格式codeType 4个字节
+	offset = offset + _const.LEN_INFO_BYTE_SIZE
+	msgLen := int(EncodeLenthByte((*ioBuf)[offset : offset+_const.LEN_INFO_BYTE_SIZE]))
+
+	offset = offset + _const.LEN_INFO_BYTE_SIZE
+	if len(*ioBuf) < (offset + headerLen + msgLen) {
+		return []byte(""), []byte(""), nil
 	}
-	fmt.Println("l: ", len(*ioBuf), l)
-	bRawData = (*ioBuf)[5:5+l]
-	*ioBuf = (*ioBuf)[5+l:]
-	return int(codeType), bRawData, nil
+	headerBytes = (*ioBuf)[offset : offset+headerLen]
+	offset = offset + headerLen
+	msgBytes = (*ioBuf)[offset : offset+msgLen]
+
+	*ioBuf = (*ioBuf)[offset+msgLen:]
+	return headerBytes, msgBytes, nil
 }
 
-//组装一个长度和编码类型到头部中去，根据codetype进行编码marshal rawdata
-func BuildData(codeType int,rawData interface{})([]byte, error){
+//组装一个header长度和body长度到头部中去，根据codetype进行编码marshal rawdata
+func BuildData(headerBytes, msgBytes []byte) ([]byte, error) {
 	//序列化rawData
-	bRawData, _ := DecodeData(rawData)
+
+	//量出headerBytes长度，再将长度进行序列化，长度为4的[]byte
+	headerLenInfo := (uint32)(len(headerBytes))
+	headerLenInfoBytes := DecodeLenth(headerLenInfo)
 
 	//量出rawData长度，再将长度进行序列化，长度为4的[]byte
-	l := (int32)(len(bRawData))
-	lRawData := DecodeLenth(l)
+	msgLenInfo := (uint32)(len(msgBytes))
+	msgLenInfoBytes := DecodeLenth(msgLenInfo)
 
-	//将序列化类型codeType序列化，长度为1的[]byte
-	cRawData := DecodeCodeType(int8(codeType))
-	//组装一个数据包
-	tbData := util.BytesCombine(lRawData, cRawData, bRawData)
+	//组装headerlen bodylen header msg信息
+	tbData := util.BytesCombine(headerLenInfoBytes, msgLenInfoBytes, headerBytes, msgBytes)
 	fmt.Println("tbData: ", tbData)
 	return tbData, nil
 }
 
-func DecodeData(rawData interface{})([]byte, error){
+func DecodeData(rawData interface{}) ([]byte, error) {
 	bData, err := json.Marshal(rawData)
 	return bData, err
 }
 
-func DecodeLenth(i int32) []byte {
-	var buf = make([]byte, 4)
-	binary.BigEndian.PutUint32(buf, uint32(i))
+func DecodeLenth(i uint32) []byte {
+	var buf = make([]byte, _const.LEN_INFO_BYTE_SIZE)
+	binary.BigEndian.PutUint32(buf, i)
 	return buf
+}
+
+func EncodeLenthByte(buf []byte) uint32 {
+	return uint32(binary.BigEndian.Uint32(buf))
 }
 
 func DecodeCodeType(i int8) []byte {
@@ -150,7 +158,7 @@ func LenthToInt(buf []byte) int {
 	return int(binary.BigEndian.Uint32(buf))
 }
 
-func SendRequest(cmdNo, bodyType int32, body proto.Message){
-db, err := proto.Marshal(body)
-fmt.Println(util.RunFuncName(), db,err)
+func SendRequest(cmdNo, bodyType int32, body proto.Message) {
+	db, err := proto.Marshal(body)
+	fmt.Println(util.RunFuncName(), db, err)
 }

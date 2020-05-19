@@ -15,29 +15,25 @@ import (
 )
 
 func Test_RequestMinLen(t *testing.T) {
-	req := &heartbeat.RequestHeader{
-		CmdNo: 2,
+	p := &heartbeat.LoginRequest{
+		UserName:"wuxun",
+		Password:"123456",
+		Token:"abcdefghigjk",
+		LoginType:1,
+		Version:1,
 	}
-	req.BodyLength = 1
-	req.BodyType = 1
-	req.HeadLength = 1
-	req.Version = "1.0.112"
-	b, _ := proto.Marshal(req)
-	fmt.Println(util.RunFuncName(), b, string(b[9:]))
-	var pb = &heartbeat.RequestHeader{}
-	twob := util.BytesCombine(b, b)
-	//直接解析即可，取出解析后的size
-	err := proto.Unmarshal(twob, pb)
-	fmt.Println("Unmarshal: ", pb, " \nerr: ", err, twob, proto.Size(pb))
-
-	twob = twob[len(twob)/2:]
-	err = proto.UnmarshalMerge(twob, pb)
-	fmt.Println("Unmarshal: ", pb, " \nerr: ", err, twob, pb)
-	GetRequestByte(1, 1, "v1.1.1", pb)
-
+	pb, err := GetRequestByte(1, 1, "v1.1.1", p)
+	fmt.Println(util.RunFuncName(), "pb: ", pb, "\nerr: ", err)
+	hp := &heartbeat.RequestHeader{}
+	proto.UnmarshalMerge(pb, hp)
+	fmt.Println("hp: ", hp)
+	pbb := pb[16:]
+	bp := &heartbeat.LoginRequest{}
+	proto.UnmarshalMerge(pbb, bp)
+	fmt.Println("bp: ", bp, pbb)
 
 }
-func GetRequestByte(cmdNo, bodyType uint32, version string, body proto.Message) {
+func GetRequestByte(cmdNo, bodyType uint32, version string, body proto.Message) ([]byte, error){
 	header := &heartbeat.RequestHeader{
 		CmdNo:      cmdNo,
 		BodyType:   bodyType,
@@ -48,7 +44,10 @@ func GetRequestByte(cmdNo, bodyType uint32, version string, body proto.Message) 
 
 	hb, err := proto.Marshal(header)
 	db, err := proto.Marshal(body)
-	fmt.Println(util.RunFuncName(), db, err, header, hb)
+	fmt.Println(util.RunFuncName(),  hb)
+	fmt.Println(util.RunFuncName(),  db)
+
 	rb := util.BytesCombine(hb, db)
 	fmt.Println(util.RunFuncName(), " rb: ", rb)
+	return rb, err
 }

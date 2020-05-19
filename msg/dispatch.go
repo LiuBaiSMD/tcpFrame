@@ -8,7 +8,9 @@ import (
 	"bufio"
 	"fmt"
 	"net"
+	"tcpFrame/const"
 	"tcpFrame/datas"
+	"tcpFrame/datas/proto"
 	"tcpFrame/registry"
 	"tcpFrame/util"
 )
@@ -32,7 +34,12 @@ func DisPatch(conn net.Conn, data interface{}) error{
 	rw := bufio.NewReadWriter(bufio.NewReader(conn), bufio.NewWriter(conn))
 	if f==nil{
 		fmt.Printf("func %s not in registry ", funcName)
-		SendMessage(rw, cData.Action, cData)
+		rsp := &heartbeat.LoginRespone{
+			Code:200,
+			LoginState:1,
+			Oms:"login success!",
+		}
+		SendMessage(rw, _const.CMD_LOGIN_RSP, _const.BT_LOGIN_RSP, rsp)
 		return nil
 	}
 	f(rw, cData)

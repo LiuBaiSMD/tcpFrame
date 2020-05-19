@@ -10,9 +10,11 @@ import (
 	"bufio"
 	"github.com/micro/go-micro/util/log"
 	"tcpFrame/conns"
+	"tcpFrame/const"
 	"tcpFrame/datas"
 	"tcpFrame/registry"
 	"tcpFrame/util"
+	"tcpFrame/datas/proto"
 )
 
 type ServerRfAddr struct {
@@ -29,7 +31,12 @@ func (b* ServerRfAddr)Communicate() registry.HttpWR{
 func (b* ServerRfAddr)HeartBeat() registry.HttpWR {
 	return  func(rw *bufio.ReadWriter, BData datas.BaseData)error{
 		log.Log("method:", util.RunFuncName()) //获取请求的方法
-		SendMessage(rw, BData.Action, BData)
+		rsp := &heartbeat.LoginRespone{
+			Code:200,
+			LoginState:1,
+			Oms:"login success!",
+		}
+		SendMessage(rw, _const.CMD_LOGIN_REQ, _const.BT_LOGIN_REQ, rsp)
 		if BData.UserId>0{
 			conns.FlushConnLive(BData.UserId)
 		}

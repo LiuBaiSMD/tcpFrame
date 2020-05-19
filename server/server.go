@@ -10,7 +10,8 @@ import (
 	"log"
 	"net"
 	"tcpFrame/conns"
-	"tcpFrame/datas"
+	"tcpFrame/const"
+	"tcpFrame/datas/proto"
 	"tcpFrame/msg"
 	"tcpFrame/util"
 	"time"
@@ -63,12 +64,13 @@ func TestReconnect(connMap conns.ConnMap){
 			continue
 		}
 		conn := connClinet.GetConn()
-		transData := datas.Request{
-			Action:"comunicate",
-			Name:"testReconnect",
-		}
 		rw := bufio.NewReadWriter(bufio.NewReader(conn), bufio.NewWriter(conn))
-		msg.SendMessage(rw, "comunicate", transData)
+		rsp := &heartbeat.LoginRespone{
+			Code:200,
+			LoginState:1,
+			Oms:"login success!",
+		}
+		msg.SendMessage(rw, _const.CMD_COMMUNICATE, _const.BT_COMMUNICATE, rsp)
 		fmt.Println(util.RunFuncName(), "---->")
 	}
 }
