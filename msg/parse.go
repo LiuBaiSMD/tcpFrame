@@ -6,12 +6,3 @@
 
 package msg
 
-import (
-	"tcpFrame/datas/proto"
-	"unsafe"
-)
-
-func RequestMinLen()int{
-	rqsHeader := &heartbeat.RequestHeader{}
-	return int(unsafe.Sizeof(rqsHeader.CmdNo)+unsafe.Sizeof(rqsHeader.HeadLength)+unsafe.Sizeof(rqsHeader.BodyLength)+unsafe.Sizeof(rqsHeader.BodyType)+unsafe.Sizeof(rqsHeader.Version))
-}

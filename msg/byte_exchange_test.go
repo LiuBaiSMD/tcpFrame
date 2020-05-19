@@ -29,4 +29,6 @@ func Test_ExchangeData(t *testing.T) {
 	fmt.Println(codeType, bRawData, err)
 	codeType, bRawData, err =msg.ParseBaseHeaderData(&ioBuf)
 	fmt.Println(codeType, bRawData, err)
+
+
 }

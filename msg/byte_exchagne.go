@@ -12,6 +12,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"tcpFrame/util"
+	proto "github.com/golang/protobuf/proto"
+
 )
 var IoBuf []byte
 
@@ -146,4 +148,9 @@ func DecodeCodeType(i int8) []byte {
 
 func LenthToInt(buf []byte) int {
 	return int(binary.BigEndian.Uint32(buf))
+}
+
+func SendRequest(cmdNo, bodyType int32, body proto.Message){
+db, err := proto.Marshal(body)
+fmt.Println(util.RunFuncName(), db,err)
 }
