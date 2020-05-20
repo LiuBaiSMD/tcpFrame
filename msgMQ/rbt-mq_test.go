@@ -14,8 +14,9 @@ import (
 )
 
 func Test_rabbitMq(t *testing.T) {
-	err:=msgMQ.RabbitMQMap["server1"].BindQueue("hello", "rbt.key1", "exchangeName1")
+	err := msgMQ.BindServiceQueue("server1", "exchangeName1", "hello", "rbt.key1")
 	fmt.Println(util.RunFuncName(), err)
-	err=msgMQ.RabbitMQMap["server1"].Publish("exchangeName1", "rbt.key1", []byte("hello world!"))
+	err = msgMQ.Publish2Service("server1", "exchangeName1", "rbt.key1", []byte("hello world!"))
 	fmt.Println(util.RunFuncName(), err)
+	msgMQ.RabbitMQMap["server1"].Consume()
 }

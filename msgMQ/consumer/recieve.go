@@ -54,7 +54,7 @@ func main() {
 		count:=1
 		for d := range msgs {
 			count++
-			log.Printf("Received a message2 : %s", d.Body)
+			log.Printf("Received a message : %s", d.Body)
 		}
 	}()
 

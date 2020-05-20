@@ -6,6 +6,10 @@
 
 package msgMQ
 
+import (
+	"errors"
+)
+
 var (
 	RabbitMQMap map[string]*RabbitMQAMQP //使用serviceName， RabbitMq作为数据存储
 )
@@ -20,6 +24,7 @@ func init(){
 
 func NewRabbitMQAMQP(rbtServiceName, rbtname, passwd, ipAddr string, port int)error{
 	rabbitAMQP := RabbitMQAMQP{
+		serviceId: rbtServiceName,
 		rbtname: rbtname,
 		passwd: passwd,
 		ipAddr: ipAddr,
@@ -27,6 +32,26 @@ func NewRabbitMQAMQP(rbtServiceName, rbtname, passwd, ipAddr string, port int)er
 		exchangeMap:make(map[string]ExchangeAMQP),
 	}
 	err := rabbitAMQP.connect()
-	RabbitMQMap[rbtServiceName] = &rabbitAMQP
+	RabbitMQMap[rabbitAMQP.serviceId] = &rabbitAMQP
+	return err
+}
+
+func Publish2Service(serviceId, excName, routeKey string, msgBytes []byte)error{
+	// 先判断是否有这个服务的消息机
+	rbtmq, ok := RabbitMQMap[serviceId]
+	if !ok{
+		return errors.New("have no serviceId rabbitMq: " + serviceId)
+	}
+
+	err :=rbtmq.Publish(excName, routeKey, msgBytes)
+	return err
+}
+
+func BindServiceQueue(serviceId, excName, qName, rtKey string)error{
+	rbtmq, ok := RabbitMQMap[serviceId]
+	if !ok{
+		return errors.New("have no serviceId rabbitMq: " + serviceId)
+	}
+	err := rbtmq.BindQueue(qName, rtKey, excName)
 	return err
 }
