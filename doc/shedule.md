@@ -38,3 +38,17 @@ consumerabbit->queueName
 1.增加专门的解释器通过cmdNo解析[]bytes为具体的proto格式
 2.开始测试使用rabbitmq、查看nats
 ```
+
+## 5.21记录
+[protobuf存储原理概要介绍](https://blog.csdn.net/weixin_34029949/article/details/91461766) 
+```
+1.如果有多个字节连续的小头字节序,翻转【字节】顺序
+2.一个rabbitmq可以同时多个连接
+3.每个连接开通一个channel()，会开辟一条通道，互不干扰consumer
+4.同一个channel不能注册同一个消费者
+```
+
+## 5.21计划
+```
+封装rabbitmq的消息方法
+```

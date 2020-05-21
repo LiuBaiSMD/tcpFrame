@@ -94,7 +94,7 @@ func Test_ParseMsg(t *testing.T) {
 
 func Test_protoChange(t *testing.T) {
 	protoMsg := &heartbeat.LoginRequest{
-		UserId:   10001,
+		UserId:   1,
 		UserName: "wuxun",
 		Password: "123456",
 		Version: "v1.1.1",
@@ -111,5 +111,6 @@ func changeProto(msgProto proto.Message) {
 	hp := &heartbeat.LoginRequest{}
 	err = proto.Unmarshal(pb, hp)
 	fmt.Println(util.RunFuncName(), "err: ", err, "msgProto: ", hp, "\nbinary: ", pb)
+	fmt.Println(util.BytesToBinaryString(pb))
 
 }

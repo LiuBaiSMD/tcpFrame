@@ -28,6 +28,12 @@ type RabbitMQAMQP struct {
 	exchangeMap  map[string]ExchangeAMQP //交换机名称 ：ExchangeAMQP
 	mu           sync.RWMutex
 }
+
+//专门用来接收rabbitmq数据的连接
+type RabbitMQmsg struct {
+
+}
+
 var mqConn *amqp.Connection
 var mqChan *amqp.Channel
 var NormalExtype = "direct"

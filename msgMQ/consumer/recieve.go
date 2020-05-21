@@ -29,59 +29,59 @@ func main() {
 
 	q, err := ch.QueueDeclare(
 		queueName1, //name
-		false,   //durable
-		false,   //delete when usused
-		false,   // exclusive
-		false,   //no-wait
-		nil,     // arguments
+		false,      //durable
+		false,      //delete when usused
+		false,      // exclusive
+		false,      //no-wait
+		nil,        // arguments
 	)
 
 	util.FailOnError(err, "Failed to declare a queue")
 	msgs, err := ch.Consume(
-		q.Name, // queue
-		"consumer12",     // consumer
-		true,   // auto-ack
-		false,  // exclusive
-		false,  // no-local
-		false,  // no-wait
-		nil,    // arguments
+		q.Name,      // queue
+		"consumer1", // consumer
+		true,        // auto-ack
+		false,       // exclusive
+		false,       // no-local
+		false,       // no-wait
+		nil,         // arguments
 	)
 	util.FailOnError(err, "Failed to register a consumer")
 
 	forever := make(chan bool)
 
 	go func() {
-		count:=1
+		count := 1
 		for d := range msgs {
 			count++
 			log.Printf("Received a message : %s", d.Body)
 		}
 	}()
 
-	go func(){
+	go func() {
 		q, err1 := ch.QueueDeclare(
-			queueName1+"2", //name
-			false,   //durable
-			false,   //delete when usused
-			false,   // exclusive
-			false,   //no-wait
-			nil,     // arguments
+			queueName1, //name
+			false,      //durable
+			false,      //delete when usused
+			false,      // exclusive
+			false,      //no-wait
+			nil,        // arguments
 		)
 		fmt.Println("err1: ", err1)
 		msgs, err1 := ch.Consume(
-			q.Name, // queue
-			"consumer122",     // consumer
-			true,   // auto-ack
-			false,  // exclusive
-			false,  // no-local
-			false,  // no-wait
-			nil,    // arguments
+			q.Name,      // queue
+			"consumer1", // consumer
+			true,        // auto-ack
+			false,       // exclusive
+			false,       // no-local
+			false,       // no-wait
+			nil,         // arguments
 		)
 		fmt.Println("q.Name+2: ", q.Name)
 		forever1 := make(chan bool)
 
 		go func() {
-			count:=1
+			count := 1
 			for d := range msgs {
 				count++
 				log.Printf("Received a message1 : %s", d.Body)
