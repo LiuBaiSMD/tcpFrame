@@ -8,6 +8,8 @@ package msgMQ
 
 import (
 	"errors"
+	"fmt"
+	"tcpFrame/util"
 )
 
 var (
@@ -52,6 +54,7 @@ func BindServiceQueue(serviceId, excName, qName, rtKey string)error{
 	if !ok{
 		return errors.New("have no serviceId rabbitMq: " + serviceId)
 	}
+	fmt.Println(util.RunFuncName(), qName, rtKey, excName)
 	err := rbtmq.BindQueue(qName, rtKey, excName)
 	return err
 }

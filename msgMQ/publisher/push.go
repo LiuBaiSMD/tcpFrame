@@ -33,6 +33,17 @@ func main(){
 		nil,    //arguments
 	)
 
+	err =  ch.ExchangeDeclare(exchangeName1, exchangeType1, true, false, false, true, nil)
+	if err != nil {
+		fmt.Printf("MQ注册交换机失败:%s \n", err)
+		return
+	}
+	util.FailOnError(err, "Failed to declare q queue")
+	err =  ch.ExchangeDeclare(exchangeName1+"2", exchangeType1, true, false, false, true, nil)
+	if err != nil {
+		fmt.Printf("MQ注册交换机失败:%s \n", err)
+		return
+	}
 	_, err = ch.QueueDeclare(
 		queueName1+"2", //name
 		false,  //durable
@@ -64,12 +75,6 @@ func main(){
 		}
 	}()
 
-	util.FailOnError(err, "Failed to declare q queue")
-	err =  ch.ExchangeDeclare(exchangeName1+"2", exchangeType1, true, false, false, true, nil)
-	if err != nil {
-		fmt.Printf("MQ注册交换机失败:%s \n", err)
-		return
-	}
 	// 绑定任务
 	err =  ch.QueueBind(queueName1+"2", routeKey1, exchangeName1+"2", true, nil)
 	if err != nil {

@@ -23,12 +23,13 @@ type RabbitMQAMQP struct {
 	port         int
 	rbtconn      *amqp.Connection
 	channel      *amqp.Channel
-	producerList []Producer
-	receiverList []Receiver
+	//producerList []Producer
+	//receiverList []Receiver
 	exchangeMap  map[string]ExchangeAMQP //交换机名称 ：ExchangeAMQP
 	mu           sync.RWMutex
 }
-
+var mqConn *amqp.Connection
+var mqChan *amqp.Channel
 var NormalExtype = "direct"
 
 // 定义队列交换机对象，对QuName进行声明然后绑定QuName RtKey ExName
@@ -46,7 +47,7 @@ type ExchangeAMQP struct {
 //连接rabbitmq
 func (r *RabbitMQAMQP) connect() error {
 	RabbitUrl := fmt.Sprintf("amqp://%s:%s@%s:%d", r.rbtname, r.passwd, r.ipAddr, r.port)
-	fmt.Println(util.RunFuncName(), "err: ", RabbitUrl)
+	fmt.Println(util.RunFuncName(), "RabbitUrl: ", RabbitUrl)
 	mqConn, err := amqp.Dial(RabbitUrl)
 	if err != nil {
 		fmt.Printf(util.RunFuncName(), "MQ打开链接失败:%s \n", err)
@@ -106,6 +107,7 @@ func (r *RabbitMQAMQP) BindQueue(qName, rtKey, excName string) error {
 	// 用于检查交换机是否存在,已经存在不需要重复声明
 	err = r.channel.ExchangeDeclarePassive(excName, NormalExtype, true, false, false, true, nil)
 	if err != nil {
+		fmt.Println(util.RunFuncName(), "没有交换机，正在注册。。。")
 		// 注册交换机
 		// name:交换机名称,kind:交换机类型,durable:是否持久化,队列存盘,true服务重启后信息不会丢失,影响性能;autoDelete:是否自动删除;
 		// noWait:是否非阻塞, true为是,不等待RMQ返回信息;args:参数,传nil即可; internal:是否为内部
