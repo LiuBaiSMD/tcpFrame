@@ -108,8 +108,8 @@ func changeProto(msgProto proto.Message) {
 	if err != nil {
 		fmt.Println("err: ", err)
 	}
-	hp := &heartbeat.LoginRespone{}
+	hp := &heartbeat.LoginRequest{}
 	err = proto.Unmarshal(pb, hp)
-	fmt.Println(util.RunFuncName(), "err: ", err, "msgProto: ", hp.Version)
+	fmt.Println(util.RunFuncName(), "err: ", err, "msgProto: ", hp, "\nbinary: ", pb)
 
 }
