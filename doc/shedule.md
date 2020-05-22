@@ -52,3 +52,8 @@ consumerabbit->queueName
 ```
 封装rabbitmq的消息方法
 ```
+## 5.22计划
+```
+完成consul配置系统以及服务注册的接入
+进行简单地服务注册
+```
