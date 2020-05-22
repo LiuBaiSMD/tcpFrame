@@ -9,6 +9,7 @@ package msgMQ
 import (
 	"errors"
 	"fmt"
+	"github.com/streadway/amqp"
 	"tcpFrame/util"
 )
 
@@ -32,6 +33,7 @@ func NewRabbitMQAMQP(rbtServiceName, rbtname, passwd, ipAddr string, port int) e
 		ipAddr:      ipAddr,
 		port:        port,
 		exchangeMap: make(map[string]ExchangeAMQP),
+		msgRecieves: make(map[string]map[string]<-chan amqp.Delivery),
 	}
 	err := rabbitAMQP.connect()
 	RabbitMQMap[rabbitAMQP.serviceId] = &rabbitAMQP
@@ -59,5 +61,25 @@ func BindServiceQueue(serviceId, excName, qName, rtKey string) error {
 	return err
 }
 
-//func Consume()
+func AddConsumeMsg(serviceId, qName, consumeName string) error {
+	rbtmq, ok := RabbitMQMap[serviceId]
+	if !ok {
+		return errors.New("have no serviceId rabbitMq: " + serviceId)
+	}
+	err := rbtmq.MakeConsumeMsg(qName, consumeName)
+	return err
+}
 
+func GetConsumeMsgChan(serviceId, qName, consumeName string) (<-chan amqp.Delivery, error) {
+	rbtmq, ok := RabbitMQMap[serviceId]
+	if !ok {
+		return nil, errors.New("have no serviceId rabbitMq: " + serviceId)
+	}
+	msgChanList, ok := rbtmq.msgRecieves[qName]
+	if ok {
+		msgChan, ok := msgChanList[consumeName]
+		fmt.Println("ok: ", ok)
+		return (msgChan), nil
+	}
+	return nil, errors.New("get no msgChan!")
+}

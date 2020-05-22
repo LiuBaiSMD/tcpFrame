@@ -16,22 +16,22 @@ import (
 
 // 定义RabbitMQ对象
 type RabbitMQAMQP struct {
-	serviceId    string
-	rbtname      string
-	passwd       string
-	ipAddr       string
-	port         int
-	rbtconn      *amqp.Connection
-	channel      *amqp.Channel
+	serviceId string
+	rbtname   string
+	passwd    string
+	ipAddr    string
+	port      int
+	rbtconn   *amqp.Connection
+	channel   *amqp.Channel
 	//producerList []Producer
 	//receiverList []Receiver
-	exchangeMap  map[string]ExchangeAMQP //交换机名称 ：ExchangeAMQP
-	mu           sync.RWMutex
+	msgRecieves  map[string]map[string]<-chan amqp.Delivery //监听消息的队列
+	exchangeMap map[string]ExchangeAMQP                    //交换机名称 ：ExchangeAMQP
+	mu          sync.RWMutex
 }
 
 //专门用来接收rabbitmq数据的连接
 type RabbitMQmsg struct {
-
 }
 
 var mqConn *amqp.Connection
@@ -86,8 +86,24 @@ func (r *RabbitMQAMQP) AddBindQueueInfo(qName, rtKey, excName string) error {
 	}
 
 	//添加QueueBind信息
-	exc.BindMap[qName] = append(exc.BindMap[qName], rtKey)
-	exc.RtKeyList = append(exc.RtKeyList, rtKey)
+	var flag int = 0
+	for _, rtk := range exc.BindMap[qName] {
+		if rtk == rtKey {
+			flag = 1
+		}
+	}
+	if flag == 0 {
+		exc.BindMap[qName] = append(exc.BindMap[qName], rtKey)
+	}
+	flag = 0
+	for _, rtk := range exc.RtKeyList {
+		if rtk == rtKey {
+			flag = 1
+		}
+	}
+	if flag == 0 {
+		exc.RtKeyList = append(exc.RtKeyList, rtKey)
+	}
 	r.exchangeMap[excName] = exc
 
 	fmt.Println(util.RunFuncName(), exc, r.exchangeMap[excName])
@@ -173,8 +189,41 @@ func (r *RabbitMQAMQP) Consume() {
 		for d := range msgs {
 			count++
 			fmt.Printf("Received a message : %s", d.Body)
-			forever<-true
+			forever <- true
 		}
 	}()
 	<-forever
+}
+
+func (r *RabbitMQAMQP) MakeConsumeMsg(qName, consumeName string) error {
+	ch := r.channel
+	_, err := r.channel.QueueDeclarePassive(qName, true, false, false, true, nil)
+	if err != nil {
+		fmt.Println(util.RunFuncName(), " err: ", err)
+		// 队列不存在,声明队列
+		// name:队列名称;durable:是否持久化,队列存盘,true服务重启后信息不会丢失,影响性能;autoDelete:是否自动删除;noWait:是否非阻塞,
+		// true为是,不等待RMQ返回信息;args:参数,传nil即可;exclusive:是否设置排他
+		_, err = r.channel.QueueDeclare(qName, true, false, false, true, nil)
+		if err != nil {
+			fmt.Printf("MQ注册队列失败:%s \n", err)
+			return errors.New("MQ注册队列失败")
+		}
+	}
+	msg, err := ch.Consume(qName, consumeName, true, false, false, false, nil)
+	if err != nil {
+		return err
+	}
+	msgList, ok := r.msgRecieves[qName]
+	if !ok {
+		r.msgRecieves[qName] = make(map[string]<-chan amqp.Delivery)
+		msgList = r.msgRecieves[qName]
+	}
+
+	_, ok = msgList[consumeName]
+	if ok {
+		fmt.Println("已有此consumer: " + consumeName+" , 将进行替换！")
+	}
+	msgList[consumeName] = msg
+	r.msgRecieves[qName] = msgList
+	return err
 }
