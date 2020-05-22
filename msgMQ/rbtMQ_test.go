@@ -18,8 +18,6 @@ func Test_rabbitMq(t *testing.T) {
 	fmt.Println(util.RunFuncName(), err)
 	err = msgMQ.Publish2Service("server1", "exchangeName1", "rbt.key1", []byte("hello world!"))
 	fmt.Println(util.RunFuncName(), err)
-	//msgMQ.RabbitMQMap["server1"].Consume()
-	//fmt.Println(util.RunFuncName(), err)
 	err = msgMQ.AddConsumeMsg("server1", "hello", "consumer1")
 	fmt.Println(util.RunFuncName(), err)
 	rbtMsg, err := msgMQ.GetConsumeMsgChan("server1", "hello", "consumer1")
