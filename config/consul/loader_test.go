@@ -7,6 +7,8 @@ import (
 	"github.com/micro/go-micro/util/log"
 	"testing"
 	configCs "tcpFrame/config/consul"
+	"os"
+	"os/signal"
 )
 
 func Test_GetConsulConfig(t *testing.T) {
@@ -40,4 +42,10 @@ func Test_GetConsulConfig(t *testing.T) {
 
 func Test_PutConsulConfig(t *testing.T) {
 	configCs.Init()
+	c := make(chan os.Signal, 0)
+	signal.Notify(c)
+
+	// Block until a signal is received.
+	s := <-c
+	fmt.Println("Got signal:", s) //Got signal: terminated
 }

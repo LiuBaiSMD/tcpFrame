@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"tcpFrame/config/consul"
 	"tcpFrame/conns"
 	"tcpFrame/const"
 	"tcpFrame/datas/proto"
@@ -31,7 +32,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("listen %s fail: %s", addr, err)
 	}
-
+	go consul.Init()
 	for {
 		conn, err := listener.Accept()
 		if err != nil {

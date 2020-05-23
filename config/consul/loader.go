@@ -10,9 +10,7 @@ import (
 	"github.com/micro/go-micro/util/log"
 	"io/ioutil"
 	"net/http"
-	"os"
 	"strconv"
-
 	"sync"
 )
 
@@ -68,30 +66,15 @@ func Init() {
 	}
 	log.Log("conf.Bytes():	", string(conf.Bytes()))
 
-	// 读取连接的配置中心
-	configMap := conf.Map()
-	log.Log("configMap:	", configMap)
 	//scan将配置读入到放入的变量consulAddr之中
 	if err := conf.Get("consul_config").Scan(&consulAddr); err != nil {
 		panic(err)
 	}
-	log.Log("consulAddr:	", consulAddr)
 	// 拼接配置的地址和 KVcenter 存储路径,对本地以及docker环境进行判断
-	dockerMode := os.Getenv("RUN_DOCKER_MODE")
-	if dockerMode != "on"{
-		log.Log("本地模式2")
-		consulConfigCenterAddr = consulAddr.Host + ":" + strconv.Itoa(consulAddr.Port)
-	}else{
-		log.Log("docker模式")
-		var consulService string
-		if err := conf.Get("consul_config","docker_host").Scan(&consulService); err != nil {
-			panic(err)
-		}
-		consulConfigCenterAddr = consulService
-	}
+	consulConfigCenterAddr = consulAddr.Host + ":" + strconv.Itoa(consulAddr.Port)
+
 	url := fmt.Sprintf("http://%s/v1/kv/%s", consulConfigCenterAddr, consulAddr.KVLocation)
-	log.Log("url:", url)
-	_, err, _ := PutJson(url, string(conf.Bytes()))
+	_, err, _ := PutConfig(url, string(conf.Bytes()))
 	if err != nil {
 		log.Fatalf("http 发送模块异常，%s", err)
 		panic(err)
@@ -103,7 +86,6 @@ func Init() {
 		panic(err)
 	}
 
-	log.Log(consulConfigCenterAddr)
 	oldStrMap := make(map[string]string)
 	oldStrMap = conf.Get().StringMap(oldStrMap)
 	go func() {
@@ -123,7 +105,7 @@ func Init() {
 			newMapConf := v.StringMap(strMap)
 			findConfDif(oldStrMap, newMapConf)
 
-			_, err, _ = PutJson(url, string(v.Bytes()))
+			_, err, _ = PutConfig(url, string(v.Bytes()))
 			if err != nil {
 				log.Fatalf("http 发送模块异常，%s", err)
 				panic(err)
@@ -131,12 +113,14 @@ func Init() {
 			log.Log("配置重新上传完毕！")
 			oldStrMap = deepCopy(newMapConf)
 		}
+		log.Log("Init over go!")
 	}()
 	// 标记已经初始化
 	inited = true
+
 	return
 }
-func PutJson(url, body string) (ret string, err error, resp *http.Response) {
+func PutConfig(url, body string) (ret string, err error, resp *http.Response) {
 	buf := bytes.NewBufferString(body)
 	req, err := http.NewRequest("PUT", url, buf)
 	if err != nil {
@@ -200,35 +184,6 @@ func deepCopy(oldMap map[string]string)(newMap map[string]string ){
 	return newMap
 }
 
-func firstFind(oldConf map[string]interface{}, newConf map[string]string)(addConf map[string]interface{}, subConf map[string]interface{}, changeConf map[string]interface{}) {
-	//log.Log("------------->oldConf", oldConf)
-	//log.Log("------------->newConf", newConf)
-	//先遍历一遍查看减少的配置
-	addConf = make(map[string]interface{})
-	subConf = make(map[string]interface{})
-	changeConf = make(map[string]interface{})
-	for key, value := range oldConf {
-		//log.Log(key, ":", value)
-		if newData, ok := newConf[key]; ok{
-			if newData != value{
-				changeConf[string(key)] = value
-			}
-		}else{
-			subConf[string(key)] = value
-		}
-	}
-	for key, value := range newConf {
-		//log.Log(key, ":", value)
-		if _, ok := oldConf[key]; !ok{
-			addConf[string(key)] = string(value)
-		}
-	}
-	log.Log("add---------->", addConf)
-	log.Log("sub---------->", subConf)
-	log.Log("change------->", changeConf)
-	return addConf, subConf, changeConf
-}
-
 func FindFile(filename,  pathname string, filesPath *[]string) error {
 	rd, err := ioutil.ReadDir(pathname)
 	for _, fi := range rd {
@@ -237,9 +192,7 @@ func FindFile(filename,  pathname string, filesPath *[]string) error {
 		} else {
 			if fi.Name() == filename{
 				*filesPath = append(*filesPath, pathname + "/" + fi.Name())
-				//fmt.Println(filesPath)
 			}
-			//fmt.Println(pathname + "/" + fi.Name())
 		}
 	}
 	return err
