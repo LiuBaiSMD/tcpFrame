@@ -2,50 +2,25 @@ package consul_test
 
 import (
 	"fmt"
-	"github.com/micro/go-micro/config"
-	"github.com/micro/go-micro/config/source/consul"
-	"github.com/micro/go-micro/util/log"
-	"testing"
 	configCs "tcpFrame/config/consul"
-	"os"
-	"os/signal"
+	"tcpFrame/util"
+	"testing"
 )
 
 func Test_GetConsulConfig(t *testing.T) {
-	// 开始测试使用本地配置
-	//appPath, _ := filepath.Abs(filepath.Dir(filepath.Join("./", string(filepath.Separator))))
-	// 注册consul的配置地址
-	consulSource := consul.NewSource(
-		consul.WithAddress("127.0.0.1:8500"),
-		consul.WithPrefix("/myOwnStation"),
-		// optionally strip the provided prefix from the keys, defaults to false
-		consul.StripPrefix(true),
-	)
-	// 创建新的配置
-	conf := config.NewConfig()
-	if err := conf.Load(consulSource); err!=nil {
-		log.Logf("load config errr!", err)
-	}
-	conf.Get("config")
-	//if err := conf.Get("cluster", "consul"); err != nil {
-	//	log.Logf("json format err!!!", err)
-	//}
-	//micro config的
-	strMap := make(map[string]string)
-	confData := conf.Get("config").StringMap(strMap)
-	fmt.Println(confData)
-	configMap := conf.Map()
-	//fmt.Println(conf)
-	fmt.Println(configMap)
-	//fmt.Println(configMap[0])
+	config, err := configCs.ReaderConfig("127.0.0.1", 8500, []string{"serviceConfig", "consul_config"})
+	fmt.Println(util.RunFuncName(), config, err)
+	fmt.Println(util.RunFuncName(), string(config))
 }
 
 func Test_PutConsulConfig(t *testing.T) {
-	configCs.Init()
-	c := make(chan os.Signal, 0)
-	signal.Notify(c)
+	err := configCs.UpdataConfig("127.0.0.1", 8500, ".", "totalConfig.json", "testConfig")
+	fmt.Println(util.RunFuncName(), err)
+}
 
-	// Block until a signal is received.
-	s := <-c
-	fmt.Println("Got signal:", s) //Got signal: terminated
+type consulConfig struct{
+	Enabled     bool    `json:"enabled"`
+	Host 		string  `josn:"host"`
+	Port 		int		`json:"port"`
+	DockerHost  string	`json:"docker_host"`
 }

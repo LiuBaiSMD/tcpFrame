@@ -2,6 +2,7 @@ package consul
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"github.com/micro/go-micro/config"
 	"github.com/micro/go-micro/config/encoder/json"
@@ -28,7 +29,7 @@ type consulConfig struct {
 	Host       string `json:"host"`
 	Port       int    `json:"port"`
 	KVLocation string `json:"kv_location"`
-	DockerHost	string `json:"docker_host"`
+	DockerHost string `json:"docker_host"`
 }
 
 // Init 初始化配置
@@ -45,7 +46,7 @@ func Init() {
 	// 先加载基础配置
 	//appPath, _ := filepath.Abs(filepath.Dir(filepath.Join("../", string(filepath.Separator))))
 	var configs []string
-	if err := FindFile("totalConfig.json", ".", &configs);err != nil{
+	if err := FindFile("totalConfig.json", ".", &configs); err != nil {
 		log.Log("寻找配置文件失败！")
 		return
 	}
@@ -120,6 +121,50 @@ func Init() {
 
 	return
 }
+
+func UpdataConfig(consulServerIp string, port int, DirName, FileName, KVAddr string) error {
+	m.Lock()
+	//进行配置推送检测，是否已经推送过配置
+	defer m.Unlock()
+	if inited {
+		log.Logf("[Init] 配置已经初始化过")
+		return errors.New("[Init] 配置已经初始化过")
+	}
+
+	// 加载yml默认配置
+	// 先加载基础配置
+	//appPath, _ := filepath.Abs(filepath.Dir(filepath.Join("../", string(filepath.Separator))))
+	var configs []string
+	if err := FindFile("totalConfig.json", ".", &configs); err != nil {
+		log.Log("寻找配置文件失败！")
+		return errors.New("寻找配置文件失败！")
+	}
+	//现在先默认使用一个配置
+	appPath := configs[0]
+	e := json.NewEncoder()
+	log.Log(appPath)
+	fileSource := file.NewSource(
+		//file.WithPath(appPath+"/conf/micro.yml"),
+		file.WithPath(appPath),
+		//file.WithPath("./conf/micro.yml"),
+		source.WithEncoder(e),
+	)
+	conf := config.NewConfig()
+	// 加载micro.yml文件
+	if err = conf.Load(fileSource); err != nil {
+		panic(err)
+	}
+
+	// 拼接配置的地址和 KVcenter 存储路径,对本地以及docker环境进行判断
+	url := fmt.Sprintf("http://%s:%d/v1/kv/%s", consulServerIp, port, KVAddr)
+	_, err, _ := PutConfig(url, string(conf.Bytes()))
+	if err != nil {
+		log.Fatalf("http 发送模块异常，%s", err)
+		return errors.New(fmt.Sprintf("http 发送模块异常，%s", err))
+	}
+	return nil
+}
+
 func PutConfig(url, body string) (ret string, err error, resp *http.Response) {
 	buf := bytes.NewBufferString(body)
 	req, err := http.NewRequest("PUT", url, buf)
@@ -146,18 +191,18 @@ func PutConfig(url, body string) (ret string, err error, resp *http.Response) {
 	return string(data), nil, resp
 }
 
-func findConfDif(oldConf map[string]string, newConf map[string]string)(addConf map[string]string, subConf map[string]string, changeConf map[string]string) {
+func findConfDif(oldConf map[string]string, newConf map[string]string) (addConf map[string]string, subConf map[string]string, changeConf map[string]string) {
 	//遍历旧配置一遍查看减少的配置,和改变的配置
 	addConf = make(map[string]string)
 	subConf = make(map[string]string)
 	changeConf = make(map[string]string)
 	for key, value := range oldConf {
-		if newData, ok := newConf[key]; ok{
-			if newData != value{
+		if newData, ok := newConf[key]; ok {
+			if newData != value {
 				//在旧配置中存在却不相等的配置  changeConf
 				changeConf[string(key)] = string(value)
 			}
-		}else{
+		} else {
 			//旧配置中不存在的配置  subConf
 			subConf[string(key)] = string(value)
 		}
@@ -165,7 +210,7 @@ func findConfDif(oldConf map[string]string, newConf map[string]string)(addConf m
 	//遍历新配置  查看增加的配置
 	for key, value := range newConf {
 		//log.Log(key, ":", value)
-		if _, ok := oldConf[key]; !ok{
+		if _, ok := oldConf[key]; !ok {
 			addConf[string(key)] = string(value)
 		}
 	}
@@ -175,7 +220,7 @@ func findConfDif(oldConf map[string]string, newConf map[string]string)(addConf m
 	return addConf, subConf, changeConf
 }
 
-func deepCopy(oldMap map[string]string)(newMap map[string]string ){
+func deepCopy(oldMap map[string]string) (newMap map[string]string) {
 	//map[string]string只使用一层拷贝即可
 	newMap = make(map[string]string)
 	for key, value := range oldMap {
@@ -184,14 +229,14 @@ func deepCopy(oldMap map[string]string)(newMap map[string]string ){
 	return newMap
 }
 
-func FindFile(filename,  pathname string, filesPath *[]string) error {
+func FindFile(filename, pathname string, filesPath *[]string) error {
 	rd, err := ioutil.ReadDir(pathname)
 	for _, fi := range rd {
 		if fi.IsDir() {
-			FindFile(filename, pathname + "/" +fi.Name(), filesPath)
+			FindFile(filename, pathname+"/"+fi.Name(), filesPath)
 		} else {
-			if fi.Name() == filename{
-				*filesPath = append(*filesPath, pathname + "/" + fi.Name())
+			if fi.Name() == filename {
+				*filesPath = append(*filesPath, pathname+"/"+fi.Name())
 			}
 		}
 	}

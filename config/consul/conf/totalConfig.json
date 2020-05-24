@@ -13,7 +13,10 @@
     "docker_host": "consul2:8500",
     "port": 8500,
     "enabled": true,
-    "kv_location": "myOwnStation/config"
+    "kv_location": "serviceConfig",
+    "testMap": {
+      "Name": "wuxun"
+    }
   },
 
   "redis_config": {
