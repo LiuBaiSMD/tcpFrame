@@ -71,4 +71,10 @@ consul中一个服务只能注册一次，服务名字不能重复
 1.服务类型名字
 2.服务的Id
 3.tag 服务版本
+增加config、server_regitry模块
+```
+
+## 5.24计划
+```
+联合rabbitmq、server_registry模块使用
 ```
