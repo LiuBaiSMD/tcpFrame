@@ -6,11 +6,11 @@
 package main
 
 import (
-"fmt"
-"net"
-"strconv"
+	"fmt"
+	"net"
+	"strconv"
 
-"github.com/hashicorp/consul/api"
+	"github.com/hashicorp/consul/api"
 )
 
 func main() {
@@ -23,7 +23,7 @@ func main() {
 		fmt.Println("api new client is failed, err:", err)
 		return
 	}
-	services, metainfo, err := client.Health().Service("serverNode", "v1000", true, &api.QueryOptions{
+	services, metainfo, err := client.Health().Service("serverNode", "v2000", true, &api.QueryOptions{
 		WaitIndex: lastIndex, // 同步点，这个调用将一直阻塞，直到有新的更新
 	})
 	if err != nil {
