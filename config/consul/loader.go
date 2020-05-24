@@ -46,7 +46,7 @@ func Init() {
 	// 先加载基础配置
 	//appPath, _ := filepath.Abs(filepath.Dir(filepath.Join("../", string(filepath.Separator))))
 	var configs []string
-	if err := FindFile("totalConfig.json", ".", &configs); err != nil {
+	if err := FindFile("service.json", ".", &configs); err != nil {
 		log.Log("寻找配置文件失败！")
 		return
 	}
@@ -55,9 +55,7 @@ func Init() {
 	e := json.NewEncoder()
 	log.Log(appPath)
 	fileSource := file.NewSource(
-		//file.WithPath(appPath+"/conf/micro.yml"),
 		file.WithPath(appPath),
-		//file.WithPath("./conf/micro.yml"),
 		source.WithEncoder(e),
 	)
 	conf := config.NewConfig()
@@ -135,7 +133,7 @@ func UpdataConfig(consulServerIp string, port int, DirName, FileName, KVAddr str
 	// 先加载基础配置
 	//appPath, _ := filepath.Abs(filepath.Dir(filepath.Join("../", string(filepath.Separator))))
 	var configs []string
-	if err := FindFile("totalConfig.json", ".", &configs); err != nil {
+	if err := FindFile("service.json", ".", &configs); err != nil {
 		log.Log("寻找配置文件失败！")
 		return errors.New("寻找配置文件失败！")
 	}

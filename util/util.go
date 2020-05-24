@@ -12,6 +12,7 @@ import (
 	"github.com/micro/go-micro/config"
 	"github.com/micro/go-micro/config/source"
 	"github.com/micro/go-micro/config/source/file"
+	"net"
 	"runtime"
 	"log"
 	"fmt"
@@ -86,4 +87,19 @@ func GetMapContent(m map[string]interface{}, path ...string) (interface{}, error
 		}
 	}
 	return nil, errors.New("missing map!")
+}
+
+func localIP() string {
+	addrs, err := net.InterfaceAddrs()
+	if err != nil {
+		return ""
+	}
+	for _, address := range addrs {
+		if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+			if ipnet.IP.To4() != nil {
+				return ipnet.IP.String()
+			}
+		}
+	}
+	return ""
 }

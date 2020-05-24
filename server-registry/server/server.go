@@ -44,7 +44,7 @@ func registerServer() {
 	registration.Address = localIP()      // 服务 IP
 
 	registration2 := &consulapi.AgentServiceRegistration{}
-	registration2.ID = "serverNode_3"      // 服务节点的名称
+	registration2.ID = "serverNode_4"      // 服务节点的名称
 	registration2.Name = "serverNode"      // 服务类型名称
 	registration2.Port = 9527              // 服务端口
 	registration2.Tags = []string{"v2000", "v3"} // tag，存放版本号等信息
