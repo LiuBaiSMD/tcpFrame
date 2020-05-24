@@ -80,7 +80,7 @@ func HandleConnection(conn net.Conn) {
 			err := proto.Unmarshal(msgBytes, msg)
 			if err !=nil{
 				//协议出错断开连接
-				//fmt.Println("get wrong rawData: ", string(msgBytes))
+				fmt.Println("get wrong rawData: ", string(msgBytes))
 				closeFlag<-1
 			}
 			fmt.Println(util.RunFuncName(), "proto: ", msg)
