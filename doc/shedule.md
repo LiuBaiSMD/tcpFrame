@@ -78,3 +78,9 @@ consul中一个服务只能注册一次，服务名字不能重复
 ```
 联合rabbitmq、server_registry模块使用
 ```
+
+## 5.25记录
+```
+发现rabbitmq中检测队列存在以及交换机存在的方法不正常返回
+待修复注册queue、exchange错误
+```

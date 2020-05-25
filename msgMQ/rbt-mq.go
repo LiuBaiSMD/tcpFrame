@@ -71,6 +71,7 @@ func AddConsumeMsg(serviceId, qName, consumeName string) error {
 }
 
 func GetConsumeMsgChan(serviceId, qName, consumeName string) (<-chan amqp.Delivery, error) {
+	fmt.Println(util.RunFuncName(), RabbitMQMap[qName])
 	rbtmq, ok := RabbitMQMap[serviceId]
 	if !ok {
 		return nil, errors.New("have no serviceId rabbitMq: " + serviceId)
