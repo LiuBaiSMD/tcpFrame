@@ -113,15 +113,14 @@ func (r *RabbitMQAMQP) AddBindQueueInfo(qName, rtKey, excName string) error {
 //进行队列绑定
 func (r *RabbitMQAMQP) BindQueue(qName, rtKey, excName string) error {
 	//首先判断是否已经有队列
-	q, err := r.channel.QueueDeclarePassive(qName, true, false, false, true, nil)
-	//_, err := r.channel.QueueDeclare(qName, true, false, false, true, nil)
-	fmt.Println(util.RunFuncName(), q, err)
+	//q, err := r.channel.QueueDeclarePassive(qName, true, false, false, true, nil)
+	_, err := r.channel.QueueDeclare(qName, true, false, false, true, nil)
+	fmt.Println(util.RunFuncName(), err)
 	if err != nil{
 		fmt.Println(util.RunFuncName(), " err: ", err)
 		// 队列不存在,声明队列
 		// name:队列名称;durable:是否持久化,队列存盘,true服务重启后信息不会丢失,影响性能;autoDelete:是否自动删除;noWait:是否非阻塞,
 		// true为是,不等待RMQ返回信息;args:参数,传nil即可;exclusive:是否设置排他
-		_, err = r.channel.QueueDeclare(qName, false, false, false, true, nil)
 		if err != nil {
 			fmt.Printf("MQ注册队列失败:%s \n", err)
 			return errors.New("MQ注册队列失败")
@@ -129,14 +128,13 @@ func (r *RabbitMQAMQP) BindQueue(qName, rtKey, excName string) error {
 	}
 	fmt.Println(util.RunFuncName(), " err: ", err)
 	// 用于检查交换机是否存在,已经存在不需要重复声明
-	err = r.channel.ExchangeDeclarePassive(excName, NormalExtype, true, false, false, true, nil)
-	//err = r.channel.ExchangeDeclare(excName, NormalExtype, true, false, false, true, nil)
+	//err = r.channel.ExchangeDeclarePassive(excName, NormalExtype, true, false, false, true, nil)
+	err = r.channel.ExchangeDeclare(excName, NormalExtype, true, false, false, true, nil)
 	if err != nil {
 		fmt.Println(util.RunFuncName(), "没有交换机，正在注册。。。")
 		// 注册交换机
 		// name:交换机名称,kind:交换机类型,durable:是否持久化,队列存盘,true服务重启后信息不会丢失,影响性能;autoDelete:是否自动删除;
 		// noWait:是否非阻塞, true为是,不等待RMQ返回信息;args:参数,传nil即可; internal:是否为内部
-		err = r.channel.ExchangeDeclare(excName, NormalExtype, true, false, false, true, nil)
 		if err != nil {
 			fmt.Printf("MQ注册交换机失败:%s \n", err)
 			return errors.New("MQ注册交换机失败")
