@@ -114,7 +114,7 @@ func (r *RabbitMQAMQP) AddBindQueueInfo(qName, rtKey, excName string) error {
 func (r *RabbitMQAMQP) BindQueue(qName, rtKey, excName string) error {
 	//首先判断是否已经有队列
 	//q, err := r.channel.QueueDeclarePassive(qName, true, false, false, true, nil)
-	_, err := r.channel.QueueDeclare(qName, true, false, false, true, nil)
+	_, err := r.channel.QueueDeclare(qName, false, false, false, true, nil)
 	fmt.Println(util.RunFuncName(), err)
 	if err != nil{
 		fmt.Println(util.RunFuncName(), " err: ", err)
@@ -129,7 +129,7 @@ func (r *RabbitMQAMQP) BindQueue(qName, rtKey, excName string) error {
 	fmt.Println(util.RunFuncName(), " err: ", err)
 	// 用于检查交换机是否存在,已经存在不需要重复声明
 	//err = r.channel.ExchangeDeclarePassive(excName, NormalExtype, true, false, false, true, nil)
-	err = r.channel.ExchangeDeclare(excName, NormalExtype, true, false, false, true, nil)
+	err = r.channel.ExchangeDeclare(excName, NormalExtype, false, false, false, true, nil)
 	if err != nil {
 		fmt.Println(util.RunFuncName(), "没有交换机，正在注册。。。")
 		// 注册交换机
