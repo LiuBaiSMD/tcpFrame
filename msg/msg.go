@@ -12,14 +12,21 @@ import (
 	"tcpFrame/conns"
 	"tcpFrame/const"
 	"tcpFrame/datas/proto"
+	"tcpFrame/msgMQ"
 	"tcpFrame/registry"
 	"tcpFrame/util"
 	"time"
 )
+
 var register *registry.Base
-func init(){
+
+func init() {
 	var rfaddr1 ServerRfAddr
 	register = registry.Registery(&rfaddr1)
+
+	// todo 读取config配置
+	msgMQ.BindServiceQueue("server1", _const.ST_TCPCONN)
+	msgMQ.BindServiceQueue("server1", _const.ST_TOKENLIB)
 }
 
 //tcp连接后处理消息的入口，进行数据解读以及消息分发
@@ -37,12 +44,11 @@ func HandleConnection(conn net.Conn) {
 	msgBytesChan := make(chan []byte, 1)
 	closeFlag := make(chan int, 1)
 
-
 	//监听tcp层发送的消息
 	go ReadMessage(rw, headBytesChan, msgBytesChan, closeFlag)
 
 	//监听连接关闭信号，如果发生错误，将关闭连接
-	go func(){
+	go func() {
 		<-closeFlag
 		fmt.Println(util.RunFuncName(), "get wrong data, will close conn!")
 		conn.Close()
@@ -50,40 +56,43 @@ func HandleConnection(conn net.Conn) {
 	}()
 
 	//不断从recieveBytes读取数据解析
-	for{
+	for {
 
 		//监听rawData数据
-		headBytes := <- headBytesChan
-		msgBytes := <- msgBytesChan
+		headBytes := <-headBytesChan
+		msgBytes := <-msgBytesChan
 		fmt.Println(util.RunFuncName(), "will encode Data ", headBytes, msgBytes)
 
 		header := &heartbeat.RequestHeader{}
 		err := proto.Unmarshal(headBytes, header)
-		if err!=nil{
+		if err != nil {
 			//协议出错断开连接
 			fmt.Println("get wrong header: ", string(headBytes))
-			closeFlag<-1
+			closeFlag <- 1
 		}
 		fmt.Println(util.RunFuncName(), "get header: ", header)
-		//todo 根据codeType实现反序列化bRawData的interface{}，将encoding部分脱离出去
-		if int(header.CmdNo)==_const.CMD_LOGIN_REQ{
+		//todo 根根据header部分，将数据发送到对应的rabbitmq
+		if header.ServerType == _const.ST_TCPCONN {
 			msg := &heartbeat.LoginRequest{}
 			err := proto.Unmarshal(msgBytes, msg)
-			if err !=nil{
+			if err != nil {
 				//协议出错断开连接
 				fmt.Println("get wrong rawData: ", string(msgBytes))
-				closeFlag<-1
+				closeFlag <- 1
 			}
 			fmt.Println(util.RunFuncName(), "proto: ", msg)
-		}else if int(header.CmdNo)==_const.CMD_HEARTBEAT{
-			msg := &heartbeat.LoginRequest{}
-			err := proto.Unmarshal(msgBytes, msg)
-			if err !=nil{
-				//协议出错断开连接
-				fmt.Println("get wrong rawData: ", string(msgBytes))
-				closeFlag<-1
-			}
-			fmt.Println(util.RunFuncName(), "proto: ", msg)
+		} else if header.ServerType == _const.ST_TOKENLIB {
+			serverName := header.ServerType
+
+			// todo 通过consul config监听，自动进行操作
+			//msgMQ.BindServiceQueue("server1", serverName)
+
+			dp2 := &heartbeat.LoginRequest{}
+			err = proto.Unmarshal(msgBytes, dp2)
+
+			msgMQ.Publish2Service("server1", serverName, msgBytes)
+
+			fmt.Println("proto", dp2)
 		}
 		//todo 通过codeType解析数据，进行dispatch
 	}
@@ -91,14 +100,14 @@ func HandleConnection(conn net.Conn) {
 
 //todo 根据codeType实现封装序列化sendBody的interface{}，将decoding部分脱离出去
 //todo 业务自行序列化sendMsg数据，只传入一个[]byte格式的sendMsg
-func SendMessage(rw *bufio.ReadWriter, cmdNo, bodyType int, sendMsg proto.Message) error {
-	fmt.Println(util.RunFuncName(), cmdNo, sendMsg)
+func SendMessage(rw *bufio.ReadWriter, serverType, cmdType string, sendMsg proto.Message) error {
+	fmt.Println(util.RunFuncName(), serverType, sendMsg)
 
 	//todo 按照codeType序列化数据
 	sendHeader := &heartbeat.RequestHeader{
-		CmdNo:      uint32(cmdNo),
+		ServerType: serverType,
 		BodyLength: uint32(proto.Size(sendMsg)),
-		BodyType:   uint32(bodyType),
+		CmdType:    cmdType,
 		Version:    "v1.0.1",
 	}
 	headerBytes, _ := proto.Marshal(sendHeader)

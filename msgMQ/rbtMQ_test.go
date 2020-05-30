@@ -16,7 +16,7 @@ import (
 )
 
 func Test_rabbitMq(t *testing.T) {
-	err := msgMQ.BindServiceQueue("server1", "exchangeName1", "hello", "rbt.key1")
+	err := msgMQ.BindServiceQueue("server1", "exchangeName1")
 	fmt.Println(util.RunFuncName(), err)
 	dp := &heartbeat.LoginRequest{
 		UserName:"wuxun",
@@ -24,7 +24,7 @@ func Test_rabbitMq(t *testing.T) {
 		LoginType:1,
 	}
 	db, _ := proto.Marshal(dp)
-	err = msgMQ.Publish2Service("server1", "exchangeName1", "rbt.key1", db)
+	err = msgMQ.Publish2Service("server1", "exchangeName1",  db)
 	fmt.Println(util.RunFuncName(), err)
 	err = msgMQ.AddConsumeMsg("server1", "hello", "consumer1")
 	fmt.Println(util.RunFuncName(), err)

@@ -35,7 +35,7 @@ func (b* ServerRfAddr)HeartBeat() registry.HttpWR {
 			LoginState:1,
 			Oms:"login success!",
 		}
-		SendMessage(rw, _const.CMD_LOGIN_REQ, _const.BT_LOGIN_REQ, rsp)
+		SendMessage(rw, _const.ST_TCPCONN, _const.CT_HEARTBEAT, rsp)
 		//msgProto := &heartbeat.LoginRequest{}
 
 		//conns.FlushConnLive(BData.UserId)

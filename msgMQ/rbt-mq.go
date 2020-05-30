@@ -40,24 +40,24 @@ func NewRabbitMQAMQP(rbtServiceName, rbtname, passwd, ipAddr string, port int) e
 	return err
 }
 
-func Publish2Service(serviceId, excName, routeKey string, msgBytes []byte) error {
+func Publish2Service(serviceId, serverName string, msgBytes []byte) error {
 	// 先判断是否有这个服务的消息机
 	rbtmq, ok := RabbitMQMap[serviceId]
 	if !ok {
 		return errors.New("have no serviceId rabbitMq: " + serviceId)
 	}
 
-	err := rbtmq.Publish(excName, routeKey, msgBytes)
+	err := rbtmq.Publish(serverName, serverName, msgBytes)
 	return err
 }
 
-func BindServiceQueue(serviceId, excName, qName, rtKey string) error {
+func BindServiceQueue(serviceId, serverName string) error {
 	rbtmq, ok := RabbitMQMap[serviceId]
 	if !ok {
 		return errors.New("have no serviceId rabbitMq: " + serviceId)
 	}
-	fmt.Println(util.RunFuncName(), qName, rtKey, excName)
-	err := rbtmq.BindQueue(qName, rtKey, excName)
+	fmt.Println(util.RunFuncName(), serverName, serverName, serverName)
+	err := rbtmq.BindQueue(serverName, serverName, serverName)
 	return err
 }
 

@@ -32,7 +32,8 @@ func main() {
 	if err != nil {
 		log.Fatalf("listen %s fail: %s", addr, err)
 	}
-	go consul.Init()
+	err = consul.UpdataConfig("127.0.0.1", 8500, ".", "service.json", "serverRegistry")
+	fmt.Println(util.RunFuncName(), err)
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
@@ -71,7 +72,7 @@ func TestReconnect(connMap conns.ConnMap){
 			LoginState:1,
 			Oms:"login success!",
 		}
-		msg.SendMessage(rw, _const.CMD_COMMUNICATE, _const.BT_COMMUNICATE, rsp)
+		msg.SendMessage(rw, _const.ST_TCPCONN, _const.CT_HEARTBEAT, rsp)
 		fmt.Println(util.RunFuncName(), "---->")
 	}
 }

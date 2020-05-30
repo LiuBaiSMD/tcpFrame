@@ -9,56 +9,62 @@ package heartbeat;
 option go_package = ".;heartbeat";
 
 message RequestHeader {
-  uint32 cmd_no = 1;
+  string server_type = 1; //服务类型
   uint32 head_length = 2;
   uint32 body_length = 3;
-  uint32 body_type = 4;
+  string cmd_type = 4;
   string version = 5;
+}
+
+message TokenTcpRequest {
+  int64 user_id = 1;
+  string password = 3;
+  string version = 4;
+}
+
+message TokenTcpRespone {
+  int64 user_id = 1;
+  string token = 2;
+  string version = 3;
 }
 
 message LoginRequest {
   int64 user_id = 1;
-  uint32 cmd_no = 2;
-  string user_name = 3;
-  string password = 4;
-  string token = 5;
-  uint32 login_type = 6;
-  string version = 7;
+  string user_name = 2;
+  string password = 3;
+  string token = 4;
+  uint32 login_type = 5;
+  string version = 6;
 }
 
 message LoginRespone {
   int64 user_id = 1;
-  uint32 cmd_no = 2;
-  uint32 code = 3;
-  uint32 login_state = 4;
-  string oms = 5;
-  string version = 6;
+  uint32 code = 2;
+  uint32 login_state = 3;
+  string oms = 4;
+  string version = 5;
 }
 
 message HeartBeatReq {
   int64 user_id = 1;
-  uint32 cmd_no = 2;
-  string version = 3;
+  string version = 2;
 }
 
 message HeartBeatRsp {
   int64 user_id = 1;
-  uint32 cmd_no = 2;
-  int64 code = 3;
-  string version = 4;
+  int64 code = 2;
+  string version = 3;
 }
 
 message CommunicateReq {
   int64 user_id = 1;
-  uint32 cmd_no = 2;
-  string version = 3;
-  string message = 4;
+  string version = 2;
+  string message = 3;
 }
 
 message CommunicateRsp {
   int64 user_id = 1;
-  uint32 cmd_no = 2;
-  int64 code = 3;
-  string version = 4;
+  int64 code = 2;
+  string version = 3;
 
 }

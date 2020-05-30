@@ -14,6 +14,6 @@ func Test_GetConsulConfig(t *testing.T) {
 }
 
 func Test_PutConsulConfig(t *testing.T) {
-	err := configCs.UpdataConfig("127.0.0.1", 8500, ".", "service.json", "testConfig")
+	err := configCs.UpdataConfig("127.0.0.1", 8500, ".", "service.json", "serverRegistry")
 	fmt.Println(util.RunFuncName(), err)
 }
