@@ -6,9 +6,11 @@ package msg
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
 	"github.com/golang/protobuf/proto"
 	"net"
+	configCs "tcpFrame/config/consul"
 	"tcpFrame/conns"
 	"tcpFrame/const"
 	"tcpFrame/datas/proto"
@@ -19,14 +21,25 @@ import (
 )
 
 var register *registry.Base
+var serverConfigs map[string][]configCs.ServerRegistry
 
 func init() {
 	var rfaddr1 ServerRfAddr
 	register = registry.Registery(&rfaddr1)
 
 	// todo 读取config配置
-	msgMQ.BindServiceQueue("server1", _const.ST_TCPCONN)
-	msgMQ.BindServiceQueue("server1", _const.ST_TOKENLIB)
+	multiConfig, err := configCs.ReaderConfig("127.0.0.1", 8500, []string{"serverRegistry", "multi"})
+	if err != nil {
+		fmt.Println(err)
+	}
+	serverConfigs = make(map[string][]configCs.ServerRegistry)
+	mJ := make([]configCs.ServerRegistry, 1)
+	json.Unmarshal(multiConfig, &mJ)
+	serverConfigs["multi"] = mJ
+
+	for  _, cfg := range(serverConfigs["multi"]){
+		msgMQ.BindServiceQueue("server1", cfg.Name)
+	}
 }
 
 //tcp连接后处理消息的入口，进行数据解读以及消息分发
