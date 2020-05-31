@@ -96,16 +96,8 @@ func HandleConnection(conn net.Conn) {
 			fmt.Println(util.RunFuncName(), "proto: ", msg)
 		} else if header.ServerType == _const.ST_TOKENLIB {
 			serverName := header.ServerType
-
-			dp2 := &heartbeat.HeartBeatReq{}
-			err = proto.Unmarshal(msgBytes, dp2)
-			rsp := &heartbeat.HeartBeatRsp{
-				UserId: dp2.UserId,
-				Code: 200,
-				Timestamp: time.Now().Unix(),
-			}
-			rspBData, _ := proto.Marshal(rsp)
-			msgMQ.Publish2Service("server1", serverName, rspBData)
+			msgBody := ParstMsg2RbtByte(header.CmdType, msgBytes)
+			msgMQ.Publish2Service("server1", serverName, msgBody)
 		}
 	}
 }

@@ -10,7 +10,9 @@ package msg
 import (
 	"encoding/binary"
 	"fmt"
+	"github.com/gogo/protobuf/proto"
 	"tcpFrame/const"
+	heartbeat "tcpFrame/datas/proto"
 	"tcpFrame/util"
 )
 
@@ -139,4 +141,13 @@ func DecodeLenth(i uint32) []byte {
 
 func EncodeLenthByte(buf []byte) uint32 {
 	return uint32(binary.BigEndian.Uint32(buf))
+}
+
+func ParstMsg2RbtByte(cmdType string, msgBytes []byte) []byte{
+	rbtByte := &heartbeat.MsgBody{
+		CmdType: cmdType,
+		MsgBytes: msgBytes,
+	}
+	bData, _ := proto.Marshal(rbtByte)
+	return bData
 }
