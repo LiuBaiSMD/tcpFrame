@@ -23,7 +23,7 @@ func main() {
 	//go testTcp.TestReconnect(conns.GetCMap())
 	addr := "127.0.0.1:8080"
 
-	tcpAddr, err := net.ResolveTCPAddr("tcp",addr)
+	tcpAddr, err := net.ResolveTCPAddr("tcp", addr)
 	if err != nil {
 		log.Fatalf("net.ResovleTCPAddr fail:%s", addr)
 	}
@@ -32,7 +32,10 @@ func main() {
 	if err != nil {
 		log.Fatalf("listen %s fail: %s", addr, err)
 	}
+	// 上传服务注册配置
 	err = consul.UpdataConfig("127.0.0.1", 8500, ".", "service.json", "serverRegistry")
+	// 上传插件地址
+	err = consul.UpdataConfig("127.0.0.1", 8500, ".", "plugin.json", "plugin")
 	fmt.Println(util.RunFuncName(), err)
 	for {
 		conn, err := listener.Accept()
@@ -40,16 +43,15 @@ func main() {
 			log.Println("listener.Accept error:", err)
 			continue
 		}
-
 		go msg.HandleConnection(conn)
 	}
 }
 
-func testConn(){
-	for{
+func testConn() {
+	for {
 		time.Sleep(time.Second)
 		conn := conns.GetConnByUId(10001)
-		if conn!=nil{
+		if conn != nil {
 			fmt.Println(util.RunFuncName(), "have conn")
 			continue
 		}
@@ -57,23 +59,23 @@ func testConn(){
 	}
 }
 
-func TestReconnect(connMap conns.ConnMap){
-	for{
+func TestReconnect(connMap conns.ConnMap) {
+	for {
 		fmt.Println("---->", util.RunFuncName())
 		time.Sleep(time.Second * 3)
 		connClinet := conns.GetConnByUId(10001)
-		if connClinet == nil{
+		if connClinet == nil {
 			continue
 		}
 		conn := connClinet.GetConn()
 		rw := bufio.NewReadWriter(bufio.NewReader(conn), bufio.NewWriter(conn))
 		rsp := &heartbeat.LoginRespone{
-			Code:200,
-			LoginState:1,
-			Oms:"login success!",
+			UserId:     0,
+			Code:       200,
+			LoginState: 1,
+			Oms:        "login success!",
 		}
-		msg.SendMessage(rw, _const.ST_TCPCONN, _const.CT_HEARTBEAT, rsp)
+		msg.SendMessage(rw, _const.ST_TCPCONN, _const.CT_HEARTBEAT, rsp, 0)
 		fmt.Println(util.RunFuncName(), "---->")
 	}
 }
-

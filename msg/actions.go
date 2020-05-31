@@ -17,25 +17,26 @@ import (
 )
 
 type ServerRfAddr struct {
-
 }
 
-func (b* ServerRfAddr)Communicate() registry.HttpWR{
-	return func(rw *bufio.ReadWriter, BData proto.Message)error{
+func (b *ServerRfAddr) Communicate() registry.HttpWR {
+	return func(rw *bufio.ReadWriter, BData []byte) error {
 		log.Log("method:", util.RunFuncName()) //获取请求的方法
 		return nil
 	}
 }
 
-func (b* ServerRfAddr)HeartBeat() registry.HttpWR {
-	return  func(rw *bufio.ReadWriter, BData proto.Message)error{
-		log.Log("method:", util.RunFuncName()) //获取请求的方法
-		rsp := &heartbeat.LoginRespone{
-			Code:200,
-			LoginState:1,
-			Oms:"login success!",
+func (b *ServerRfAddr) HeartBeat() registry.HttpWR {
+	return func(rw *bufio.ReadWriter, BData []byte) error {
+		req := &heartbeat.HeartBeatReq{}
+		proto.Unmarshal(BData, req)
+		log.Log("method:", util.RunFuncName(), req) //获取请求的方法
+
+		rsp := &heartbeat.HeartBeatRsp{
+			Code: 200,
+			Version:  "login success!",
 		}
-		SendMessage(rw, _const.ST_TCPCONN, _const.CT_HEARTBEAT, rsp)
+		SendMessage(rw, _const.ST_TCPCONN, _const.CT_HEARTBEAT, rsp, req.UserId)
 		//msgProto := &heartbeat.LoginRequest{}
 
 		//conns.FlushConnLive(BData.UserId)

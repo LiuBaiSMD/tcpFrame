@@ -133,7 +133,7 @@ func UpdataConfig(consulServerIp string, port int, DirName, FileName, KVAddr str
 	// 先加载基础配置
 	//appPath, _ := filepath.Abs(filepath.Dir(filepath.Join("../", string(filepath.Separator))))
 	var configs []string
-	if err := FindFile("service.json", ".", &configs); err != nil {
+	if err := FindFile(FileName, DirName, &configs); err != nil {
 		log.Log("寻找配置文件失败！")
 		return errors.New("寻找配置文件失败！")
 	}

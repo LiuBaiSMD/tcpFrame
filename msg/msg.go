@@ -28,16 +28,16 @@ func init() {
 	register = registry.Registery(&rfaddr1)
 
 	// todo 读取config配置
-	multiConfig, err := configCs.ReaderConfig("127.0.0.1", 8500, []string{"serverRegistry", "multi"})
+	multiConfig, err := configCs.ReaderConfig("127.0.0.1", 8500, []string{"serverRegistry", _const.ST_MULTI})
 	if err != nil {
 		fmt.Println(err)
 	}
 	serverConfigs = make(map[string][]configCs.ServerRegistry)
 	mJ := make([]configCs.ServerRegistry, 1)
 	json.Unmarshal(multiConfig, &mJ)
-	serverConfigs["multi"] = mJ
+	serverConfigs[_const.ST_MULTI] = mJ
 
-	for  _, cfg := range(serverConfigs["multi"]){
+	for  _, cfg := range(serverConfigs[_const.ST_MULTI]){
 		msgMQ.BindServiceQueue("server1", cfg.Name)
 	}
 }
@@ -97,27 +97,27 @@ func HandleConnection(conn net.Conn) {
 		} else if header.ServerType == _const.ST_TOKENLIB {
 			serverName := header.ServerType
 
-			// todo 通过consul config监听，自动进行操作
-			//msgMQ.BindServiceQueue("server1", serverName)
-
-			dp2 := &heartbeat.LoginRequest{}
+			dp2 := &heartbeat.HeartBeatReq{}
 			err = proto.Unmarshal(msgBytes, dp2)
-
-			msgMQ.Publish2Service("server1", serverName, msgBytes)
-
-			fmt.Println("proto", dp2)
+			rsp := &heartbeat.HeartBeatRsp{
+				UserId: dp2.UserId,
+				Code: 200,
+				Timestamp: time.Now().Unix(),
+			}
+			rspBData, _ := proto.Marshal(rsp)
+			msgMQ.Publish2Service("server1", serverName, rspBData)
 		}
-		//todo 通过codeType解析数据，进行dispatch
 	}
 }
 
 //todo 根据codeType实现封装序列化sendBody的interface{}，将decoding部分脱离出去
 //todo 业务自行序列化sendMsg数据，只传入一个[]byte格式的sendMsg
-func SendMessage(rw *bufio.ReadWriter, serverType, cmdType string, sendMsg proto.Message) error {
+func SendMessage(rw *bufio.ReadWriter, serverType, cmdType string, sendMsg proto.Message, userId int64) error {
 	fmt.Println(util.RunFuncName(), serverType, sendMsg)
 
 	//todo 按照codeType序列化数据
 	sendHeader := &heartbeat.RequestHeader{
+		UserId: userId,
 		ServerType: serverType,
 		BodyLength: uint32(proto.Size(sendMsg)),
 		CmdType:    cmdType,

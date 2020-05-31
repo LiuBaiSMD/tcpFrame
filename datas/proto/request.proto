@@ -9,11 +9,12 @@ package heartbeat;
 option go_package = ".;heartbeat";
 
 message RequestHeader {
-  string server_type = 1; //服务类型
-  uint32 head_length = 2;
-  uint32 body_length = 3;
-  string cmd_type = 4;
-  string version = 5;
+  int64 user_id = 1;
+  string server_type = 2; //服务类型
+  uint32 head_length = 3;
+  uint32 body_length = 4;
+  string cmd_type = 5;
+  string version = 6;
 }
 
 message TokenTcpRequest {
@@ -53,7 +54,8 @@ message HeartBeatReq {
 message HeartBeatRsp {
   int64 user_id = 1;
   int64 code = 2;
-  string version = 3;
+  int64 timestamp =3;
+  string version = 4;
 }
 
 message CommunicateReq {
