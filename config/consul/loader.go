@@ -32,12 +32,6 @@ type consulConfig struct {
 	DockerHost string `json:"docker_host"`
 }
 
-type ServerRegistry struct {
-	Name string `json:"name"`
-	Tags []string `json:"tags"`
-	RouteKey string `json:"routeKey"`
-}
-
 // Init 初始化配置
 func Init() {
 	m.Lock()

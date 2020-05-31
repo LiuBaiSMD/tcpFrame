@@ -1,0 +1,13 @@
+{
+  "consul": {
+    "ip": "127.0.0.1",
+    "port": 8500
+  },
+  "rabbitmq": {
+    "serverName": "server1",
+    "ip": "127.0.0.1",
+    "port": 5672,
+    "loginName": "guest",
+    "password": "guest"
+  }
+}
