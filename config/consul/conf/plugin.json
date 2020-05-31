@@ -9,5 +9,9 @@
     "port": 5672,
     "loginName": "guest",
     "password": "guest"
+  },
+  "tcpConn": {
+    "ip": "127.0.0.1",
+    "port": 8080
   }
 }
