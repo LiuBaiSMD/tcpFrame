@@ -154,3 +154,20 @@ BData = {
 }
 
 ```
+
+## 7.使用教程
+### 启动server/server.go
+```
+使用go mod tidy下载依赖包
+1.启动rabbitmq 本地启动rabbitmq 使用默认端口
+2.启动consul 本地启动consul ： consul agent -dev
+3.启动server/server.go : go run server.go
+```
+
+### 启动client 模拟用户请求
+```
+1.启动client中的client，模拟客户端请求
+go run clinet
+2.启动client中的token-server,模拟服务集群中的token生成服务
+go run client/token-server.go
+```

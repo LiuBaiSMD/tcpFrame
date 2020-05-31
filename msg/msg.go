@@ -94,7 +94,7 @@ func HandleConnection(conn net.Conn) {
 				closeFlag <- 1
 			}
 			fmt.Println(util.RunFuncName(), "proto: ", msg)
-		} else if header.ServerType == _const.ST_TOKENLIB {
+		} else  {
 			serverName := header.ServerType
 			msgBody := ParstMsg2RbtByte(header.CmdType, msgBytes)
 			msgMQ.Publish2Service("server1", serverName, msgBody)
