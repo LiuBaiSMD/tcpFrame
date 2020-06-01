@@ -37,14 +37,16 @@ func init() {
 	json.Unmarshal(multiConfig, &mJ)
 	serverConfigs[_const.ST_MULTI] = mJ
 
-	for  _, cfg := range(serverConfigs[_const.ST_MULTI]){
+	for _, cfg := range (serverConfigs[_const.ST_MULTI]) {
 		msgMQ.BindServiceQueue("server1", cfg.Name)
 	}
+
 }
 
 //tcp连接后处理消息的入口，进行数据解读以及消息分发
 func HandleConnection(conn net.Conn) {
-
+	//test 模块
+	go testRspToken()
 	//在登录成功后，将conn加入到conns连接池中,进行其他行为监听，
 	//先模拟用户userId为100001的连接进入
 	// todo 此部分将移入用户登录模块中
@@ -94,7 +96,7 @@ func HandleConnection(conn net.Conn) {
 				closeFlag <- 1
 			}
 			fmt.Println(util.RunFuncName(), "proto: ", msg)
-		} else  {
+		} else {
 			serverName := header.ServerType
 			msgBody := ParstMsg2RbtByte(header.CmdType, msgBytes)
 			msgMQ.Publish2Service("server1", serverName, msgBody)
@@ -109,7 +111,7 @@ func SendMessage(rw *bufio.ReadWriter, serverType, cmdType string, sendMsg proto
 
 	//todo 按照codeType序列化数据
 	sendHeader := &heartbeat.RequestHeader{
-		UserId: userId,
+		UserId:     userId,
 		ServerType: serverType,
 		BodyLength: uint32(proto.Size(sendMsg)),
 		CmdType:    cmdType,
@@ -165,3 +167,30 @@ func ReadMessage(rw *bufio.ReadWriter, headBytesChan chan []byte, msgBytesChan c
 		}
 	}
 }
+
+func testRspToken() {
+	serverName := _const.ST_TOKENLIB
+	rspServerName := serverName + "res"
+	msgMQ.BindServiceQueue("server1", rspServerName)
+	msgMQ.AddConsumeMsg("server1", rspServerName, "consumer2")
+	rbtMsg, err := msgMQ.GetConsumeMsgChan("server1", rspServerName, "consumer2")
+	if err != nil || rbtMsg == nil {
+		fmt.Println(util.RunFuncName(), err, "没有数据或连接!")
+	} else {
+		for {
+			message := <-rbtMsg
+			pb := &heartbeat.TokenTcpRespone{}
+			proto.Unmarshal(message.Body, pb)
+			conn := conns.GetConnByUId(int(pb.UserId)).GetConn()
+			if conn==nil{
+				fmt.Println(util.RunFuncName(), "nil conn!")
+				continue
+			}
+			rw := bufio.NewReadWriter(bufio.NewReader(conn), bufio.NewWriter(conn))
+			SendMessage(rw, _const.ST_TOKENLIB, _const.CT_GET_TOKEN, pb, 10001)
+			fmt.Println(util.RunFuncName(), "send: ", pb)
+		}
+
+	}
+}
+

@@ -32,6 +32,13 @@ type consulConfig struct {
 	DockerHost string `json:"docker_host"`
 }
 
+func init(){
+	// 上传服务注册配置
+	UpdataConfig("127.0.0.1", 8500, ".", "service.json", "serverRegistry")
+
+	UpdataConfig("127.0.0.1", 8500, ".", "plugin.json", "plugin")
+}
+
 // Init 初始化配置
 func Init() {
 	m.Lock()

@@ -8,6 +8,7 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"github.com/golang/protobuf/proto"
 	"net"
 	"os"
 	"tcpFrame/const"
@@ -40,6 +41,18 @@ func main() {
 		os.Exit(1)
 	}
 	defer conn.Close()
+
+	go func(){
+		rw := bufio.NewReadWriter(bufio.NewReader(conn), bufio.NewWriter(conn))
+		message := make([]byte, 1024)
+		for{
+			time.Sleep(time.Second)
+			rw.Read(message)
+			tp := &heartbeat.TokenTcpRespone{}
+			proto.Unmarshal(message, tp)
+			fmt.Println(util.RunFuncName(), tp, string(message[8:]))
+		}
+	}()
 
 	connClose = make(chan int, 1)
 	rw := bufio.NewReadWriter(bufio.NewReader(conn), bufio.NewWriter(conn))

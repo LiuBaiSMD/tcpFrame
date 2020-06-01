@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/go-redis/redis"
+	"tcpFrame/util"
 )
 
 var rdsConn *redis.Client
@@ -30,12 +31,15 @@ func InitRedis(Password, redisUrl string, DB int) *redis.Client { //InitTokenRed
 func SaveUserToken(userId , tokenStr string)error{
 	//保存用户token与userId
 	fmt.Println("set user conn ", userId)
-	mashMember, err := json.Marshal(tokenStr)
-	result, err := rdsConn.HSet(userTokenKey, string(userId), mashMember).Result()
+	//mashMember, err := json.Marshal(tokenStr)
+	result, err := rdsConn.HSet(userTokenKey, userId, tokenStr).Result()
 	if err != nil{
 		return err
 	}
-	fmt.Println("set result: ", result)
+	if result == true{
+		fmt.Println(util.RunFuncName(), "-------------->", result)
+	}
+	fmt.Println("set result: ", result, err)
 	return nil
 }
 

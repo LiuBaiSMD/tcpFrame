@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"tcpFrame/config/consul"
 	"tcpFrame/conns"
 	"tcpFrame/const"
 	"tcpFrame/datas/proto"
@@ -32,10 +31,6 @@ func main() {
 	if err != nil {
 		log.Fatalf("listen %s fail: %s", addr, err)
 	}
-	// 上传服务注册配置
-	err = consul.UpdataConfig("127.0.0.1", 8500, ".", "service.json", "serverRegistry")
-	// 上传插件地址
-	err = consul.UpdataConfig("127.0.0.1", 8500, ".", "plugin.json", "plugin")
 	fmt.Println(util.RunFuncName(), err)
 	for {
 		conn, err := listener.Accept()

@@ -8,16 +8,24 @@ package main
 
 import (
 	"fmt"
+	"github.com/go-redis/redis"
 	"github.com/golang/protobuf/proto"
-	_const "tcpFrame/const"
-	heartbeat "tcpFrame/datas/proto"
+	"strconv"
+	"tcpFrame/const"
+	"tcpFrame/dao"
+	"tcpFrame/datas/proto"
 	"tcpFrame/handle"
 	"tcpFrame/msgMQ"
 	sr "tcpFrame/server-registry"
 	"tcpFrame/util"
 )
 
+var rdsConn *redis.Client
+
 func main() {
+	//初始化数据库
+	rdsConn = dao.InitRedis("", "127.0.0.1:6379", 0)
+	sr.ConsulConnect("localhost:8500")
 	serverName := _const.ST_TOKENLIB
 	sr.RegisterServer(
 		"127.0.0.1",
@@ -32,6 +40,8 @@ func main() {
 
 func GetRbtMsg(serverName string) {
 	msgMQ.BindServiceQueue("server1", serverName)
+	rspServerName := serverName + "res"
+	msgMQ.BindServiceQueue("server1", rspServerName)
 	msgMQ.AddConsumeMsg("server1", serverName, "consumer2")
 	rbtMsg, err := msgMQ.GetConsumeMsgChan("server1", serverName, "consumer2")
 	if err != nil || rbtMsg == nil {
@@ -43,11 +53,19 @@ func GetRbtMsg(serverName string) {
 			fmt.Println("get message : ", message.Body)
 			msgBody := &heartbeat.MsgBody{}
 			err = proto.Unmarshal(message.Body, msgBody)
-			if msgBody.CmdType == _const.CT_GET_TOKEN{
+			if msgBody.CmdType == _const.CT_GET_TOKEN {
 				pb := &heartbeat.TokenTcpRequest{}
 				proto.Unmarshal(msgBody.MsgBytes, pb)
-				token, err := handle.GetTokenReal(string(pb.UserId), pb.UserName)
-				fmt.Println(util.RunFuncName(), "token: ", token, err)
+				s := strconv.FormatInt(pb.UserId, 10)
+				token, err := handle.GetTokenReal(s, pb.UserName)
+				fmt.Println(util.RunFuncName(), "token: ", pb, token, err)
+				dao.SaveUserToken(s, token)
+				rpb := &heartbeat.TokenTcpRespone{
+					UserId: pb.UserId,
+					Token:  token,
+				}
+				rpbBytes, _ := proto.Marshal(rpb)
+				msgMQ.Publish2Service("server1", rspServerName, rpbBytes)
 			}
 
 		}

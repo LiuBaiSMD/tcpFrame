@@ -46,4 +46,8 @@ var HEARTBEAT_ACTION = "HeartBeat"
 
 var LOGIN_AUTH = "wuxun"
 
+//DB_KEY
+var (
+	REDIS_TOKEN_KEY = "userToken"
+)
 

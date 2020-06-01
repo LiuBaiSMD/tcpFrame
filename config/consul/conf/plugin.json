@@ -10,6 +10,11 @@
     "loginName": "guest",
     "password": "guest"
   },
+  "redis": {
+    "Ip": "127.0.0.1",
+    "Port": 6379,
+    "DB": 0
+  },
   "tcpConn": {
     "ip": "127.0.0.1",
     "port": 8080
