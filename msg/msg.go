@@ -115,7 +115,6 @@ func SendMessage(rw *bufio.ReadWriter, serverType, cmdType string, sendMsg proto
 	sendHeader := &heartbeat.RequestHeader{
 		UserId:     userId,
 		ServerType: serverType,
-		BodyLength: uint32(proto.Size(sendMsg)),
 		CmdType:    cmdType,
 		Version:    "v1.0.1",
 	}
