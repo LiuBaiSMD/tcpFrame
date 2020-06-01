@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"github.com/gogo/protobuf/proto"
 	"github.com/micro/go-micro/util/log"
+	"bufio"
 	"net"
 	"tcpFrame/datas/proto"
 )
@@ -19,12 +20,14 @@ type ClientConn struct{
 	userId int				`"用户id"`
 	connID int				`本次处理连接的id`
 	conn net.Conn
+	rw *bufio.ReadWriter
 }
 func NewClient(uId int, con net.Conn, cId int)  *ClientConn{
 	return &ClientConn{
 		userId:uId,
 		conn: con,
 		connID:cId,
+		rw: bufio.NewReadWriter(bufio.NewReader(con), bufio.NewWriter(con)),
 	}
 }
 
@@ -39,6 +42,11 @@ func (c ClientConn)GetConnID()int{
 func (c ClientConn)GetConn()net.Conn{
 	return c.conn
 }
+
+func (c ClientConn)GetRwBuf()*bufio.ReadWriter{
+	return c.rw
+}
+
 func (c ClientConn)ListenMessage(){
 	done := make(chan struct{})
 	readBuffer := make([]byte, 128)

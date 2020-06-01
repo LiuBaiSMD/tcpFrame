@@ -98,6 +98,8 @@ func HandleConnection(conn net.Conn) {
 			fmt.Println(util.RunFuncName(), "proto: ", msg)
 		} else {
 			serverName := header.ServerType
+
+			// 加工一道，方便业务模块自行进行解析
 			msgBody := ParstMsg2RbtByte(header.CmdType, msgBytes)
 			msgMQ.Publish2Service("server1", serverName, msgBody)
 		}
@@ -181,12 +183,11 @@ func testRspToken() {
 			message := <-rbtMsg
 			pb := &heartbeat.TokenTcpRespone{}
 			proto.Unmarshal(message.Body, pb)
-			conn := conns.GetConnByUId(int(pb.UserId)).GetConn()
-			if conn==nil{
+			rw := conns.GetConnByUId(int(pb.UserId)).GetRwBuf()
+			if rw==nil{
 				fmt.Println(util.RunFuncName(), "nil conn!")
 				continue
 			}
-			rw := bufio.NewReadWriter(bufio.NewReader(conn), bufio.NewWriter(conn))
 			SendMessage(rw, _const.ST_TOKENLIB, _const.CT_GET_TOKEN, pb, 10001)
 			fmt.Println(util.RunFuncName(), "send: ", pb)
 		}
