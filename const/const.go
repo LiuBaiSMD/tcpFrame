@@ -20,31 +20,14 @@ var (
 )
 
 var (
-	CMD_LOGIN_REQ = 0
-	CMD_LOGIN_RSP = 1
-	CMD_COMMUNICATE = 3
 	ST_TCPCONN = "tcpConn"
 	ST_TOKENLIB = "tokenlib"
-)
-
-//BODY TYPE
-var (
-	BT_LOGIN_REQ = 1
-	BT_LOGIN_RSP = 2
-	BT_COMMUNICATE = 3
 )
 
 var (
 	CT_GET_TOKEN = "getToken"
 	CT_HEARTBEAT = "heartBeat"
 )
-
-var LOGIN_ACTION = "login"
-var LOGIN_FAILED_ACTION = "loginFailed"
-var LOGIN_SUCCESS_ACTION = "loginSuccess"
-var HEARTBEAT_ACTION = "HeartBeat"
-
-var LOGIN_AUTH = "wuxun"
 
 //DB_KEY
 var (
