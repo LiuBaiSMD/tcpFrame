@@ -11,10 +11,8 @@ option go_package = ".;heartbeat";
 message RequestHeader {
   int64 user_id = 1;
   string server_type = 2; //服务类型
-  uint32 head_length = 3;
-  uint32 body_length = 4;
-  string cmd_type = 5;
-  string version = 6;
+  string cmd_type = 3;
+  string version = 4;
 }
 
 //此结构为rabbitmq中的数据传输格式，其中cmdType供服务中自行区分解析
