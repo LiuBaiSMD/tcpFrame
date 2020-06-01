@@ -103,3 +103,19 @@ func localIP() string {
 	}
 	return ""
 }
+
+func PanicErr(err error) bool {
+	if err != nil {
+		log.Fatal(err)
+		return false
+	}
+	return true
+}
+
+func LogErr(err error) bool {
+	if err != nil {
+		log.Println(err)
+		return false
+	}
+	return true
+}

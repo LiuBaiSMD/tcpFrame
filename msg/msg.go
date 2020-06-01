@@ -15,6 +15,7 @@ import (
 	"tcpFrame/const"
 	"tcpFrame/datas/proto"
 	"tcpFrame/msgMQ"
+	natsmq "tcpFrame/msgMQ/nats-mq"
 	"tcpFrame/registry"
 	"tcpFrame/util"
 	"time"
@@ -102,6 +103,7 @@ func HandleConnection(conn net.Conn) {
 			// 加工一道，方便业务模块自行进行解析
 			msgBody := ParstMsg2RbtByte(header.CmdType, msgBytes)
 			msgMQ.Publish2Service("server1", serverName, msgBody)
+			natsmq.Publish(serverName, msgBody)
 		}
 	}
 }

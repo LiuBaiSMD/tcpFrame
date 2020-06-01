@@ -10,12 +10,14 @@ import (
 	"fmt"
 	"github.com/go-redis/redis"
 	"github.com/golang/protobuf/proto"
+	"github.com/nats-io/nats.go"
 	"strconv"
 	"tcpFrame/const"
 	"tcpFrame/dao"
 	"tcpFrame/datas/proto"
 	"tcpFrame/handle"
 	"tcpFrame/msgMQ"
+	natsmq "tcpFrame/msgMQ/nats-mq"
 	sr "tcpFrame/server-registry"
 	"tcpFrame/util"
 )
@@ -35,6 +37,7 @@ func main() {
 	defer sr.DeRegistryAll(serverName)
 
 	//接受从rabbtmq发送过来的数据
+	go natsmq.AsyncNats(serverName, "test", handleMsg)
 	GetRbtMsg(serverName)
 }
 
@@ -72,4 +75,14 @@ func GetRbtMsg(serverName string) {
 	}
 	//获取该serverName下的所有服务节点信息
 	//servicesMap, _ := server_registry.ServicesMap("serverNode")
+}
+
+func handleMsg(msg *nats.Msg) {
+	msgBody := &heartbeat.MsgBody{}
+	err := proto.Unmarshal(msg.Data, msgBody)
+	fmt.Println(util.RunFuncName(), msgBody, err)
+	pb := &heartbeat.TokenTcpRequest{}
+	proto.Unmarshal(msgBody.MsgBytes, pb)
+	fmt.Println(util.RunFuncName(), "token: ", pb)
+
 }
