@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/golang/protobuf/proto"
+	"github.com/nats-io/nats.go"
 	"net"
 	configCs "tcpFrame/config/consul"
 	"tcpFrame/conns"
@@ -24,7 +25,9 @@ import (
 var register *registry.Base
 var serverConfigs map[string][]configCs.ServerRegistry
 
-func init() {
+
+//tcp连接服注册方法
+func InitServer() {
 	var rfaddr1 ServerRfAddr
 	register = registry.Registery(&rfaddr1)
 
@@ -38,16 +41,19 @@ func init() {
 	json.Unmarshal(multiConfig, &mJ)
 	serverConfigs[_const.ST_MULTI] = mJ
 
+	//消息中间件订阅
 	for _, cfg := range (serverConfigs[_const.ST_MULTI]) {
 		msgMQ.BindServiceQueue("server1", cfg.Name)
-	}
+		natsmq.AsyncNats(_const.GetServerRspKey(cfg.Name), "test", testHandle)
 
+	}
 }
 
 //tcp连接后处理消息的入口，进行数据解读以及消息分发
 func HandleConnection(conn net.Conn) {
 	//test 模块
 	go testRspToken()
+
 	//在登录成功后，将conn加入到conns连接池中,进行其他行为监听，
 	//先模拟用户userId为100001的连接进入
 	// todo 此部分将移入用户登录模块中
@@ -192,7 +198,18 @@ func testRspToken() {
 			SendMessage(rw, _const.ST_TOKENLIB, _const.CT_GET_TOKEN, pb, 10001)
 			fmt.Println(util.RunFuncName(), "send: ", pb)
 		}
-
 	}
 }
 
+func testHandle(msg *nats.Msg){
+	pb := &heartbeat.TokenTcpRespone{}
+	proto.Unmarshal(msg.Data, pb)
+	pb.Version = "nats"
+	rw := conns.GetConnByUId(int(pb.UserId)).GetRwBuf()
+	if rw==nil{
+		fmt.Println(util.RunFuncName(), "nil conn!")
+		return
+	}
+	SendMessage(rw, _const.ST_TOKENLIB, _const.CT_GET_TOKEN, pb, 10001)
+	fmt.Println(util.RunFuncName(), "send: ", pb)
+}

@@ -19,6 +19,7 @@ import (
 
 func main() {
 	go testConn()
+	msg.InitServer()
 	//go testTcp.TestReconnect(conns.GetCMap())
 	addr := "127.0.0.1:8080"
 

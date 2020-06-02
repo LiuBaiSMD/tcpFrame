@@ -69,6 +69,7 @@ func GetRbtMsg(serverName string) {
 				}
 				rpbBytes, _ := proto.Marshal(rpb)
 				msgMQ.Publish2Service("server1", rspServerName, rpbBytes)
+				natsmq.Publish(_const.GetServerRspKey(serverName), rpbBytes)
 			}
 
 		}
