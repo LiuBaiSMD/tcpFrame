@@ -42,15 +42,23 @@ func main() {
 	}
 	defer conn.Close()
 
-	go func(){
+	go func() {
 		rw := bufio.NewReadWriter(bufio.NewReader(conn), bufio.NewWriter(conn))
-		message := make([]byte, 1024)
-		for{
-			time.Sleep(time.Second)
-			rw.Read(message)
-			tp := &heartbeat.TokenTcpRespone{}
-			proto.Unmarshal(message, tp)
-			fmt.Println(util.RunFuncName(), tp, string(message[8:]))
+		headBytesChan := make(chan []byte, 1)
+		msgBytesChan := make(chan []byte, 1)
+		closeFlag := make(chan int, 1)
+
+		//监听tcp层发送的消息
+		go msg.ReadMessage(rw, headBytesChan, msgBytesChan, closeFlag)
+		for {
+			headerBytes := <-headBytesChan
+			msgBytes := <-msgBytesChan
+			hp := &heartbeat.RequestHeader{}
+			mp := &heartbeat.TokenTcpRespone{}
+			proto.Unmarshal(headerBytes, hp)
+			proto.Unmarshal(msgBytes, mp)
+			fmt.Println(util.RunFuncName(), hp)
+			fmt.Println(util.RunFuncName(), mp)
 		}
 	}()
 
@@ -67,8 +75,8 @@ func Heartbeat(userId int64, rw *bufio.ReadWriter, closeFlag chan int) error {
 		select {
 		case <-timer.C:
 			req := &heartbeat.HeartBeatReq{
-				UserId: userId,
-				Version:   "v1.0.1",
+				UserId:  userId,
+				Version: "v1.0.1",
 			}
 			err := msg.SendMessage(rw, _const.ST_TOKENLIB, _const.CT_GET_TOKEN, req, userId)
 			if err != nil {
@@ -87,9 +95,9 @@ func GetToken(rw *bufio.ReadWriter, userId int64, userName string) error {
 		select {
 		case <-timer.C:
 			req := &heartbeat.TokenTcpRequest{
-				UserId: userId,
+				UserId:   userId,
 				UserName: userName,
-				Version:   "v1.0.1",
+				Version:  "v1.0.1",
 			}
 			msg.SendMessage(rw, _const.ST_TOKENLIB, _const.CT_GET_TOKEN, req, userId)
 			// 获取一个token

@@ -17,8 +17,8 @@ message RequestHeader {
 
 //此结构为rabbitmq中的数据传输格式，其中cmdType供服务中自行区分解析
 message MsgBody {
-  string cmdType = 1;
-  bytes msgBytes = 2;
+  string cmd_Type = 1;
+  bytes msg_bytes = 2;
   string version = 3;
 }
 
@@ -74,5 +74,4 @@ message CommunicateRsp {
   int64 user_id = 1;
   int64 code = 2;
   string version = 3;
-
 }

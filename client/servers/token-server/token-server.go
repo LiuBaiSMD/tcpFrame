@@ -69,7 +69,7 @@ func GetRbtMsg(serverName string) {
 				}
 				rpbBytes, _ := proto.Marshal(rpb)
 				msgMQ.Publish2Service("server1", rspServerName, rpbBytes)
-				natsmq.Publish(_const.GetServerRspKey(serverName), rpbBytes)
+				//natsmq.Publish(_const.GetServerRspKey(serverName), rpbBytes)
 			}
 
 		}
@@ -84,6 +84,15 @@ func handleMsg(msg *nats.Msg) {
 	fmt.Println(util.RunFuncName(), msgBody, err)
 	pb := &heartbeat.TokenTcpRequest{}
 	proto.Unmarshal(msgBody.MsgBytes, pb)
-	fmt.Println(util.RunFuncName(), "token: ", pb)
+	s := strconv.FormatInt(pb.UserId, 10)
+	token, err := handle.GetTokenReal(s, pb.UserName)
+	fmt.Println(util.RunFuncName(), "token: ", pb, token, err)
+	dao.SaveUserToken(s, token)
+	rpb := &heartbeat.TokenTcpRespone{
+		UserId: pb.UserId,
+		Token:  token,
+	}
+	rpbBytes, _ := proto.Marshal(rpb)
+	natsmq.Publish(_const.GetServerRspKey(_const.ST_TOKENLIB), rpbBytes)
 
 }
