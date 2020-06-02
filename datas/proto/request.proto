@@ -9,69 +9,71 @@ package heartbeat;
 option go_package = ".;heartbeat";
 
 message RequestHeader {
-  int64 user_id = 1;
-  string server_type = 2; //服务类型
-  string cmd_type = 3;
-  string version = 4;
+    int64 user_id = 1;
+    string server_type = 2; //服务类型
+    string cmd_type = 3;
+    string version = 4;
 }
 
-//此结构为rabbitmq中的数据传输格式，其中cmdType供服务中自行区分解析
+//此结构为消息中间件中的数据传输格式，其中cmdType供服务中自行区分解析
+//加上发送方的sender_id, 接受的userId
 message MsgBody {
-  string cmd_Type = 1;
-  bytes msg_bytes = 2;
-  string version = 3;
+    string sender_id = 1;
+    string cmd_Type = 2;
+    bytes msg_bytes = 3;
+    string version = 4;
 }
 
 message TokenTcpRequest {
-  int64 user_id = 1;
-  string user_name = 2;
-  string password = 3;
-  string version = 4;
+    int64 user_id = 1;
+    string user_name = 2;
+    string password = 3;
+    string version = 4;
 }
 
 message TokenTcpRespone {
-  int64 user_id = 1;
-  string token = 2;
-  string version = 3;
+    int64 user_id = 1;
+    string token = 2;
+    string version = 3;
 }
 
 message LoginRequest {
-  int64 user_id = 1;
-  string user_name = 2;
-  string password = 3;
-  string token = 4;
-  uint32 login_type = 5;
-  string version = 6;
+    int64 user_id = 1;
+    string user_name = 2;
+    string password = 3;
+    string token = 4;
+    uint32 login_type = 5;
+    string version = 6;
 }
 
 message LoginRespone {
-  int64 user_id = 1;
-  uint32 code = 2;
-  uint32 login_state = 3;
-  string oms = 4;
-  string version = 5;
+    int64 user_id = 1;
+    uint32 code = 2;
+    uint32 login_state = 3;
+    string oms = 4;
+    string version = 5;
 }
 
 message HeartBeatReq {
-  int64 user_id = 1;
-  string version = 2;
+    int64 user_id = 1;
+    string version = 2;
 }
 
 message HeartBeatRsp {
-  int64 user_id = 1;
-  int64 code = 2;
-  int64 timestamp = 3;
-  string version = 4;
+    int64 user_id = 1;
+    int64 code = 2;
+    int64 timestamp = 3;
+    string version = 4;
 }
 
 message CommunicateReq {
-  int64 user_id = 1;
-  string version = 2;
-  string message = 3;
+    int64 user_id = 1;
+    string version = 2;
+    string message = 3;
 }
 
 message CommunicateRsp {
-  int64 user_id = 1;
-  int64 code = 2;
-  string version = 3;
+    int64 user_id = 1;
+    int64 code = 2;
+    string version = 3;
 }

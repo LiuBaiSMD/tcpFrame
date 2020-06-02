@@ -56,7 +56,7 @@ func GetRbtMsg(serverName string) {
 			fmt.Println("get message : ", message.Body)
 			msgBody := &heartbeat.MsgBody{}
 			err = proto.Unmarshal(message.Body, msgBody)
-			if msgBody.CmdType == _const.CT_GET_TOKEN {
+			if msgBody.Cmd_Type == _const.CT_GET_TOKEN {
 				pb := &heartbeat.TokenTcpRequest{}
 				proto.Unmarshal(msgBody.MsgBytes, pb)
 				s := strconv.FormatInt(pb.UserId, 10)

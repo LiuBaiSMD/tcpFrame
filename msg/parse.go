@@ -145,7 +145,7 @@ func EncodeLenthByte(buf []byte) uint32 {
 
 func ParstMsg2RbtByte(cmdType string, msgBytes []byte) []byte{
 	rbtByte := &heartbeat.MsgBody{
-		CmdType: cmdType,
+		Cmd_Type: cmdType,
 		MsgBytes: msgBytes,
 	}
 	bData, _ := proto.Marshal(rbtByte)

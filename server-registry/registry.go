@@ -31,10 +31,10 @@ func ConsulConnect(consulUrl string) {
 	csCli, _ = consulapi.NewClient(config)
 }
 
-func RegisterServer(serviceIp string, servicePort int, serviceName string, tags []string) error {
+func RegisterServer(serviceIp string, servicePort int, serviceName string, tags []string) ( string, error) {
 	if csCli == nil {
 		print("consul client not init!")
-		return errors.New("consul client not init!")
+		return "", errors.New("consul client not init!")
 	}
 	//注册前确定service的Name，以及在此Name下的serviceId
 	registration := &consulapi.AgentServiceRegistration{}
@@ -48,12 +48,12 @@ func RegisterServer(serviceIp string, servicePort int, serviceName string, tags 
 	err := csCli.Agent().ServiceRegister(registration)
 	if err != nil {
 		log.Fatal("register server error : ", err)
-		return err
+		return "", err
 	}
 	servers[registration.ID] = registration
 	fmt.Println(util.RunFuncName(), servers)
 
-	return nil
+	return serviceId, nil
 }
 
 func getLastServiceIdByServiceName(cs *consulapi.Client, serviceName string) (string, error) {
