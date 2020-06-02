@@ -140,3 +140,10 @@ nats封装记录：
 使用serverName+"req"作为queueName作为请求数据，
 使用serverName+"rsq"作为queueName作为回复数据，
 ```
+
+## 6.3计划
+```
+datas/MsgBody
+//此结构为消息中间件中的数据传输格式，其中cmdType供服务中自行区分解析
+//加上发送方的sender_id, 接受的userId
+```

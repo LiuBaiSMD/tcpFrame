@@ -16,7 +16,6 @@ import (
 	"tcpFrame/dao"
 	"tcpFrame/datas/proto"
 	"tcpFrame/handle"
-	"tcpFrame/msgMQ"
 	natsmq "tcpFrame/msgMQ/nats-mq"
 	sr "tcpFrame/server-registry"
 	"tcpFrame/util"
@@ -38,44 +37,7 @@ func main() {
 
 	//接受从rabbtmq发送过来的数据
 	go natsmq.AsyncNats(serverName, "test", handleMsg)
-	GetRbtMsg(serverName)
-}
-
-func GetRbtMsg(serverName string) {
-	msgMQ.BindServiceQueue("server1", serverName)
-	rspServerName := serverName + "res"
-	msgMQ.BindServiceQueue("server1", rspServerName)
-	msgMQ.AddConsumeMsg("server1", serverName, "consumer2")
-	rbtMsg, err := msgMQ.GetConsumeMsgChan("server1", serverName, "consumer2")
-	if err != nil || rbtMsg == nil {
-		fmt.Println(util.RunFuncName(), err, "没有数据或连接!")
-	} else {
-		for {
-			fmt.Println(util.RunFuncName(), "ready to get msg")
-			message := <-rbtMsg
-			fmt.Println("get message : ", message.Body)
-			msgBody := &heartbeat.MsgBody{}
-			err = proto.Unmarshal(message.Body, msgBody)
-			if msgBody.Cmd_Type == _const.CT_GET_TOKEN {
-				pb := &heartbeat.TokenTcpRequest{}
-				proto.Unmarshal(msgBody.MsgBytes, pb)
-				s := strconv.FormatInt(pb.UserId, 10)
-				token, err := handle.GetTokenReal(s, pb.UserName)
-				fmt.Println(util.RunFuncName(), "token: ", pb, token, err)
-				dao.SaveUserToken(s, token)
-				rpb := &heartbeat.TokenTcpRespone{
-					UserId: pb.UserId,
-					Token:  token,
-				}
-				rpbBytes, _ := proto.Marshal(rpb)
-				msgMQ.Publish2Service("server1", rspServerName, rpbBytes)
-				//natsmq.Publish(_const.GetServerRspKey(serverName), rpbBytes)
-			}
-
-		}
-	}
-	//获取该serverName下的所有服务节点信息
-	//servicesMap, _ := server_registry.ServicesMap("serverNode")
+	select {}
 }
 
 func handleMsg(msg *nats.Msg) {

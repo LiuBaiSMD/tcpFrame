@@ -43,7 +43,6 @@ func InitServer() {
 
 	//消息中间件订阅
 	for _, cfg := range (serverConfigs[_const.ST_MULTI]) {
-		msgMQ.BindServiceQueue("server1", cfg.Name)
 		natsmq.AsyncNats(_const.GetServerRspKey(cfg.Name), "test", testHandle)
 
 	}
@@ -52,8 +51,6 @@ func InitServer() {
 //tcp连接后处理消息的入口，进行数据解读以及消息分发
 func HandleConnection(conn net.Conn) {
 	//test 模块
-	go testRspToken()
-
 	//在登录成功后，将conn加入到conns连接池中,进行其他行为监听，
 	//先模拟用户userId为100001的连接进入
 	// todo 此部分将移入用户登录模块中
@@ -108,7 +105,6 @@ func HandleConnection(conn net.Conn) {
 
 			// 加工一道，方便业务模块自行进行解析
 			msgBody := ParstMsg2RbtByte(header.CmdType, msgBytes)
-			msgMQ.Publish2Service("server1", serverName, msgBody)
 			natsmq.Publish(serverName, msgBody)
 		}
 	}
