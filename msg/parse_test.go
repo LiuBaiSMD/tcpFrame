@@ -15,44 +15,6 @@ import (
 	"testing"
 )
 
-func Test_RequestMinLen(t *testing.T) {
-	p := &heartbeat.LoginRequest{
-		UserName:  "wuxun",
-		Password:  "123456",
-		Token:     "abcdefghigjk",
-		LoginType: 1,
-		Version:   "v1.0.1",
-	}
-	pb, err := GetRequestByte(1, 1, "v1.1.1", p)
-	fmt.Println(util.RunFuncName(), "pb: ", pb, "\nerr: ", err)
-	hp := &heartbeat.RequestHeader{}
-	proto.UnmarshalMerge(pb, hp)
-	fmt.Println("hp: ", hp)
-	pbb := pb[16:]
-	bp := &heartbeat.LoginRequest{}
-	proto.UnmarshalMerge(pbb, bp)
-	fmt.Println("bp: ", bp, pbb)
-
-}
-
-func GetRequestByte(cmdNo, bodyType uint32, version string, body proto.Message) ([]byte, error) {
-	header := &heartbeat.RequestHeader{
-		CmdNo:      cmdNo,
-		BodyType:   bodyType,
-		Version:    version,
-		BodyLength: uint32(proto.Size(body)),
-	}
-	header.HeadLength = uint32(proto.Size(header))
-	hb, err := proto.Marshal(header)
-	db, err := proto.Marshal(body)
-	fmt.Println(util.RunFuncName(), hb)
-	fmt.Println(util.RunFuncName(), db)
-
-	rb := util.BytesCombine(hb, db)
-	fmt.Println(util.RunFuncName(), " rb: ", rb)
-	return rb, err
-}
-
 var ioBuf []byte
 
 func Test_ParseMsg(t *testing.T) {
@@ -64,10 +26,8 @@ func Test_ParseMsg(t *testing.T) {
 	msgBytes, _ := proto.Marshal(msgBody)
 
 	sendHeader := &heartbeat.RequestHeader{
-		CmdNo:      1,
-		BodyLength: uint32(proto.Size(msgBody)),
-		BodyType:   1,
-		Version:    "v1.0.1",
+		CmdType: "getToken",
+		Version: "v1.0.1",
 	}
 	headerBytes, _ := proto.Marshal(sendHeader)
 
@@ -97,7 +57,7 @@ func Test_protoChange(t *testing.T) {
 		UserId:   1,
 		UserName: "wuxun",
 		Password: "123456",
-		Version: "v1.1.1",
+		Version:  "v1.1.1",
 	}
 	changeProto(protoMsg)
 
@@ -113,4 +73,30 @@ func changeProto(msgProto proto.Message) {
 	fmt.Println(util.RunFuncName(), "err: ", err, "msgProto: ", hp, "\nbinary: ", pb)
 	fmt.Println(util.BytesToBinaryString(pb))
 
+}
+
+func Test_ParseMsg2RbtByte(t *testing.T) {
+	dp := &heartbeat.TokenTcpRequest{
+		UserId:   10001,
+		UserName: "wuxun",
+	}
+	pb, _ := proto.Marshal(dp)
+	db := msg.ParseMsg2RbtByte("test", "token", pb)
+	container := &heartbeat.TokenTcpRequest{}
+	parseBytes2Pb(db, container)
+	fmt.Println(util.RunFuncName(), container)
+}
+
+func parseBytes2Pb(db []byte, container proto.Message) error {
+	msgBody := &heartbeat.MsgBody{}
+	err := proto.Unmarshal(db, msgBody)
+	if err != nil {
+		return err
+	}
+	err = proto.Unmarshal(msgBody.MsgBytes, container)
+	if err != nil {
+		return err
+	}
+	fmt.Println(util.RunFuncName(), container)
+	return nil
 }

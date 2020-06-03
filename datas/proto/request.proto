@@ -19,7 +19,7 @@ message RequestHeader {
 //加上发送方的sender_id, 接受的userId
 message MsgBody {
     string sender_id = 1;
-    string cmd_Type = 2;
+    string cmd_type = 2;
     bytes msg_bytes = 3;
     string version = 4;
 }

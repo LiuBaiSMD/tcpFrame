@@ -23,18 +23,19 @@ import (
 
 var rdsConn *redis.Client
 
+var serverId string
+
 func main() {
 	//初始化数据库
 	rdsConn = dao.InitRedis("", "127.0.0.1:6379", 0)
 	sr.ConsulConnect("localhost:8500")
 	serverName := _const.ST_TOKENLIB
-	sr.RegisterServer(
+	serverId, _ := sr.RegisterServer(
 		"127.0.0.1",
 		0,
 		serverName,
 		[]string{})
-	defer sr.DeRegistryAll(serverName)
-
+	defer sr.DeRegistry(serverId)
 	//接受从rabbtmq发送过来的数据
 	go natsmq.AsyncNats(serverName, "test", handleMsg)
 	select {}
@@ -44,6 +45,8 @@ func handleMsg(msg *nats.Msg) {
 	msgBody := &heartbeat.MsgBody{}
 	err := proto.Unmarshal(msg.Data, msgBody)
 	fmt.Println(util.RunFuncName(), msgBody, err)
+
+	// todo 根据msgBody.CmdType解析 msgBody.MsgBytes
 	pb := &heartbeat.TokenTcpRequest{}
 	proto.Unmarshal(msgBody.MsgBytes, pb)
 	s := strconv.FormatInt(pb.UserId, 10)
@@ -55,6 +58,6 @@ func handleMsg(msg *nats.Msg) {
 		Token:  token,
 	}
 	rpbBytes, _ := proto.Marshal(rpb)
-	natsmq.Publish(_const.GetServerRspKey(_const.ST_TOKENLIB), rpbBytes)
+	natsmq.Publish(msgBody.SenderId, rpbBytes)
 
 }

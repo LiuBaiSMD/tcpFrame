@@ -25,9 +25,11 @@ import (
 var register *registry.Base
 var serverConfigs map[string][]configCs.ServerRegistry
 
+var senderId string
 
 //tcp连接服注册方法
-func InitServer() {
+func InitServer(serverId string) {
+	senderId = serverId
 	var rfaddr1 ServerRfAddr
 	register = registry.Registery(&rfaddr1)
 
@@ -42,10 +44,7 @@ func InitServer() {
 	serverConfigs[_const.ST_MULTI] = mJ
 
 	//消息中间件订阅
-	for _, cfg := range (serverConfigs[_const.ST_MULTI]) {
-		natsmq.AsyncNats(_const.GetServerRspKey(cfg.Name), "test", testHandle)
-
-	}
+	natsmq.AsyncNats(serverId, serverId, testHandle)
 }
 
 //tcp连接后处理消息的入口，进行数据解读以及消息分发
@@ -104,7 +103,7 @@ func HandleConnection(conn net.Conn) {
 			serverName := header.ServerType
 
 			// 加工一道，方便业务模块自行进行解析
-			msgBody := ParstMsg2RbtByte(header.CmdType, msgBytes)
+			msgBody := ParseMsg2RbtByte(senderId, header.CmdType, msgBytes)
 			natsmq.Publish(serverName, msgBody)
 		}
 	}

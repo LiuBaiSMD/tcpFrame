@@ -13,13 +13,20 @@ import (
 	"tcpFrame/const"
 	"tcpFrame/datas/proto"
 	"tcpFrame/msg"
+	"tcpFrame/server-registry"
 	"tcpFrame/util"
 	"time"
 )
 
 func main() {
 	go testConn()
-	msg.InitServer()
+	server_registry.ConsulConnect("localhost:8500")
+	serverId, err := server_registry.RegisterServer("127.0.0.1", 8080, _const.ST_TCPCONN, []string{"tcpConn"})
+	if err != nil{
+		log.Fatalln("服务注册失败： ", _const.ST_TCPCONN)
+	}
+	defer server_registry.DeRegistry(serverId)
+	msg.InitServer(serverId)
 	//go testTcp.TestReconnect(conns.GetCMap())
 	addr := "127.0.0.1:8080"
 

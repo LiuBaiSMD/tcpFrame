@@ -32,7 +32,7 @@ type consulConfig struct {
 	DockerHost string `json:"docker_host"`
 }
 
-func init(){
+func init() {
 	// 上传服务注册配置
 	UpdataConfig("127.0.0.1", 8500, ".", "service.json", "serverRegistry")
 
@@ -145,6 +145,10 @@ func UpdataConfig(consulServerIp string, port int, DirName, FileName, KVAddr str
 		return errors.New("寻找配置文件失败！")
 	}
 	//现在先默认使用一个配置
+	if len(configs) <= 0 {
+		log.Info("配置加载失败:", FileName)
+		return nil
+	}
 	appPath := configs[0]
 	e := json.NewEncoder()
 	log.Log(appPath)

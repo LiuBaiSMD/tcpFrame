@@ -12,7 +12,7 @@ import (
 	"fmt"
 	"github.com/gogo/protobuf/proto"
 	"tcpFrame/const"
-	heartbeat "tcpFrame/datas/proto"
+	"tcpFrame/datas/proto"
 	"tcpFrame/util"
 )
 
@@ -143,11 +143,19 @@ func EncodeLenthByte(buf []byte) uint32 {
 	return uint32(binary.BigEndian.Uint32(buf))
 }
 
-func ParstMsg2RbtByte(cmdType string, msgBytes []byte) []byte{
+func ParseMsg2RbtByte(senderId, cmdType string, msgBytes []byte) []byte {
 	rbtByte := &heartbeat.MsgBody{
-		Cmd_Type: cmdType,
+		SenderId: senderId,
+		CmdType: cmdType,
 		MsgBytes: msgBytes,
 	}
 	bData, _ := proto.Marshal(rbtByte)
 	return bData
+}
+
+func parseBytes2Pb(db []byte, container proto.Message){
+	msgBody := &heartbeat.MsgBody{}
+	proto.Unmarshal(db, msgBody)
+	proto.Unmarshal(msgBody.MsgBytes, container)
+	fmt.Println(util.RunFuncName(), container)
 }
