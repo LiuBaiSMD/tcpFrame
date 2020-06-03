@@ -22,6 +22,7 @@ import (
 	"time"
 )
 
+var version = "1.0.1"
 var register *registry.Base
 var serverConfigs map[string][]configCs.ServerRegistry
 
@@ -79,7 +80,7 @@ func HandleConnection(conn net.Conn) {
 		//监听rawData数据
 		headBytes := <-headBytesChan
 		msgBytes := <-msgBytesChan
-		fmt.Println(util.RunFuncName(), "will encode Data ", headBytes, msgBytes)
+		//fmt.Println(util.RunFuncName(), "will encode Data ", headBytes, msgBytes)
 
 		header := &heartbeat.RequestHeader{}
 		err := proto.Unmarshal(headBytes, header)
@@ -124,9 +125,9 @@ func SendMessage(rw *bufio.ReadWriter, serverType, cmdType string, sendMsg proto
 	headerBytes, _ := proto.Marshal(sendHeader)
 	msgBytes, _ := proto.Marshal(sendMsg)
 	bData, _ := BuildData(headerBytes, msgBytes)
-	n, err := rw.Write(bData)
+	_, err := rw.Write(bData)
 	err1 := rw.Flush()
-	fmt.Println(util.RunFuncName(), "send data size: ", n, bData)
+	//fmt.Println(util.RunFuncName(), "send data size: ", n, bData)
 	time.Sleep(time.Microsecond * 10)
 	if err != nil || err1 != nil {
 		fmt.Println(util.RunFuncName(), "have err ", err)
@@ -144,7 +145,7 @@ func ReadMessage(rw *bufio.ReadWriter, headBytesChan chan []byte, msgBytesChan c
 		for {
 			bData := make([]byte, 1024)
 			n, err := rw.Read(bData)
-			fmt.Println(util.RunFuncName(), "get data size: ", n)
+			//fmt.Println(util.RunFuncName(), "get data size: ", n)
 			if err != nil {
 				fmt.Println("链接无法读取，连接关闭。", err)
 				closeFlag <- 1
@@ -153,7 +154,7 @@ func ReadMessage(rw *bufio.ReadWriter, headBytesChan chan []byte, msgBytesChan c
 			if n > 0 {
 				bData = bData[:n]
 				readChan <- bData
-				fmt.Println(util.RunFuncName(), "get data: ", bData)
+				//fmt.Println(util.RunFuncName(), "get data: ", bData)
 			}
 		}
 	}()
@@ -162,8 +163,8 @@ func ReadMessage(rw *bufio.ReadWriter, headBytesChan chan []byte, msgBytesChan c
 	for {
 		s := <-readChan
 		recieveBytes = util.BytesCombine(recieveBytes, s)
-		headerBytes, msgBytes, err := Parse2HeaderAndMsg(&recieveBytes)
-		fmt.Println(util.RunFuncName(), "get rawData: ", headerBytes, msgBytes, err)
+		headerBytes, msgBytes, _ := Parse2HeaderAndMsg(&recieveBytes)
+		//fmt.Println(util.RunFuncName(), "get rawData: ", headerBytes, msgBytes, err)
 
 		if len(headerBytes) > 0 && len(msgBytes) > 0 {
 			headBytesChan <- headerBytes
@@ -197,14 +198,18 @@ func testRspToken() {
 }
 
 func testHandle(msg *nats.Msg){
+	hp := &heartbeat.MsgBody{}
+	proto.Unmarshal(msg.Data, hp)
+	//fmt.Println(util.RunFuncName(), "hp:", hp)
+	// todo 根据cmdType解析数据，以及在msgBody中添加serverType
 	pb := &heartbeat.TokenTcpRespone{}
-	proto.Unmarshal(msg.Data, pb)
+	proto.Unmarshal(hp.MsgBytes, pb)
 	pb.Version = "nats"
 	rw := conns.GetConnByUId(int(pb.UserId)).GetRwBuf()
 	if rw==nil{
 		fmt.Println(util.RunFuncName(), "nil conn!")
 		return
 	}
-	SendMessage(rw, _const.ST_TOKENLIB, _const.CT_GET_TOKEN, pb, 10001)
-	fmt.Println(util.RunFuncName(), "send: ", pb)
+	SendMessage(rw, _const.ST_TOKENLIB, hp.CmdType, pb, 10001)
+	fmt.Println(util.RunFuncName(), "send to user: ", pb.UserId, pb)
 }

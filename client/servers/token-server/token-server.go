@@ -44,8 +44,7 @@ func main() {
 func handleMsg(msg *nats.Msg) {
 	msgBody := &heartbeat.MsgBody{}
 	err := proto.Unmarshal(msg.Data, msgBody)
-	fmt.Println(util.RunFuncName(), msgBody, err)
-
+	revieverId := msgBody.SenderId
 	// todo 根据msgBody.CmdType解析 msgBody.MsgBytes
 	pb := &heartbeat.TokenTcpRequest{}
 	proto.Unmarshal(msgBody.MsgBytes, pb)
@@ -57,7 +56,12 @@ func handleMsg(msg *nats.Msg) {
 		UserId: pb.UserId,
 		Token:  token,
 	}
-	rpbBytes, _ := proto.Marshal(rpb)
-	natsmq.Publish(msgBody.SenderId, rpbBytes)
-
+	rspBytes, _ := proto.Marshal(rpb)
+	msgBody.SenderId = serverId
+	msgBody.MsgBytes = rspBytes
+	rpbBytes, _ := proto.Marshal(msgBody)
+	err = natsmq.Publish(revieverId, rpbBytes)
+	if err!=nil{
+		fmt.Println(util.RunFuncName(), err)
+	}
 }
