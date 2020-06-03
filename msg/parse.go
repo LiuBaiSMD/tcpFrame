@@ -75,13 +75,15 @@ func DecodeLenth(i uint32) []byte {
 }
 
 func EncodeLenthByte(buf []byte) uint32 {
-	return uint32(binary.BigEndian.Uint32(buf))
+	return binary.BigEndian.Uint32(buf)
 }
 
-func ParseMsg2RbtByte(senderId, cmdType string, msgBytes []byte) []byte {
+func ParseMsg2RbtByte(senderId, cmdType string, userId int64, msgType int32, msgBytes []byte) []byte {
 	rbtByte := &heartbeat.MsgBody{
+		MsgType: msgType,
 		SenderId: senderId,
 		CmdType: cmdType,
+		UserId: userId,
 		MsgBytes: msgBytes,
 		Version: version,
 	}

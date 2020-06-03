@@ -12,12 +12,15 @@ import (
 	"github.com/micro/go-micro/config"
 	"github.com/micro/go-micro/config/source"
 	"github.com/micro/go-micro/config/source/file"
+	"io/ioutil"
 	"net"
+	"net/http"
 	"runtime"
 	"log"
 	"fmt"
 	"errors"
 	mJson "github.com/micro/go-micro/config/encoder/json"
+	"encoding/json"
 )
 
 func RunFuncName() string {
@@ -116,6 +119,62 @@ func LogErr(err error) bool {
 	if err != nil {
 		log.Println(err)
 		return false
+	}
+	return true
+}
+
+func GetBody(r *http.Request) (map[string]interface{}, error) {
+	//解析get方法参数
+	if r.Method == "GET" {
+		r.ParseForm()
+		res := make(map[string]interface{})
+		for k, v := range r.Form {
+			if len(v) != 1 {
+				return nil, errors.New("请求参数重复，请检查！")
+			}
+			res[k] = v[0]
+		}
+		return res, nil
+	}
+
+	//将参数解析为 map[string]interface{}型
+	if r.Method != "POST" {
+		return nil, errors.New("请求类型错误，请检查")
+	}
+	ContType := r.Header["Content-Type"]
+	if ContType[0] == "application/json" {
+		if err := r.ParseForm(); err != nil {
+			return nil, errors.New("参数解析异常")
+		}
+		b, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			return nil, errors.New("连接错误")
+		}
+		var webData interface{}
+		if err := json.Unmarshal(b, &webData); err != nil {
+			return nil, errors.New("json解析异常")
+		}
+		mapdata := webData.(map[string]interface{})
+		return mapdata, nil
+	}
+	if ContType[0] == "application/x-www-form-urlencoded" {
+		r.ParseForm()
+		var mapdata map[string]interface{}
+		mapdata = make(map[string]interface{})
+		for k, v := range r.Form {
+			mapdata[k] = v[0]
+		}
+		return mapdata, nil
+	}
+	return nil, errors.New("请求HEADER类型错误，请检查！")
+}
+
+func CheckOKs(oks ...bool) bool {
+	//检查oks是否全为true
+	for _, v := range oks {
+		if !v {
+			return false
+		}
 	}
 	return true
 }

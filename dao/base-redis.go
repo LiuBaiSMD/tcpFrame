@@ -1,10 +1,11 @@
 package dao
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/go-redis/redis"
+	"tcpFrame/util"
+	"time"
 )
 
 var rdsConn *redis.Client
@@ -15,11 +16,11 @@ func InitRedis(Password, redisUrl string, DB int) *redis.Client { //InitTokenRed
 	rdsConn = redis.NewClient(&redis.Options{
 		Addr:     redisUrl,
 		Password: Password, // no password set
-		DB:       DB,  // use default DB
+		DB:       DB,       // use default DB
 	})
 	rdsConn.BgRewriteAOF()
 	pong, err := rdsConn.Ping().Result()
-	if err != nil{
+	if err != nil {
 		fmt.Println(pong, err)
 		return nil
 	}
@@ -27,34 +28,38 @@ func InitRedis(Password, redisUrl string, DB int) *redis.Client { //InitTokenRed
 	return rdsConn
 }
 
-func SaveUserToken(userId , tokenStr string)error{
+func buildTokenKey(userId string) string {
+	return userTokenKey + ":" + userId
+}
+
+func SaveUserToken(userId, tokenStr string) error {
 	//保存用户token与userId
 	//mashMember, err := json.Marshal(tokenStr)
-	result, err := rdsConn.HSet(userTokenKey, userId, tokenStr).Result()
-	if err != nil{
+	result, err := rdsConn.Set(buildTokenKey(userId), tokenStr, time.Second * time.Duration(3600*2)).Result()
+	if err != nil {
 		fmt.Println("save user token error:", userId, err)
 		return err
 	}
-	if result == true{
+	if result != "" {
 		fmt.Println("save and update user token: ", userId, tokenStr)
 	}
+
 	//fmt.Println("set result: ", result, err)
 	return nil
 }
 
-func GetuserToken(userId string)(string, error){
-	result, err := rdsConn.HGet(userTokenKey, userId).Result()
-	if err != nil{
+func GetuserToken(userId string) (string, error) {
+	token, err := rdsConn.Get(buildTokenKey(userId)).Result()
+	fmt.Println(util.RunFuncName(), token, err)
+	if err != nil {
 		return "", err
 	}
-	var token string
-	json.Unmarshal([]byte(result), &token)
 	fmt.Println("get user token ", userId, ":", token, len(token))
 	return token, nil
 }
 
-func GetRedisClient()(*redis.Client, error){
-	if rdsConn!=nil{
+func GetRedisClient() (*redis.Client, error) {
+	if rdsConn != nil {
 		return rdsConn, nil
 	}
 	return nil, errors.New("redis连接失败！")

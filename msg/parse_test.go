@@ -9,6 +9,7 @@ package msg_test
 import (
 	"fmt"
 	"github.com/golang/protobuf/proto"
+	_const "tcpFrame/const"
 	"tcpFrame/datas/proto"
 	"tcpFrame/msg"
 	"tcpFrame/util"
@@ -81,7 +82,7 @@ func Test_ParseMsg2RbtByte(t *testing.T) {
 		UserName: "wuxun",
 	}
 	pb, _ := proto.Marshal(dp)
-	db := msg.ParseMsg2RbtByte("test", "token", pb)
+	db := msg.ParseMsg2RbtByte("test", "token", 10001, _const.MT_NORMAL_SERVER, pb)
 	container := &heartbeat.TokenTcpRequest{}
 	parseBytes2Pb(db, container)
 	fmt.Println(util.RunFuncName(), container)

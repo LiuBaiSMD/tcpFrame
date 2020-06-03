@@ -16,12 +16,15 @@ message RequestHeader {
 }
 
 //此结构为消息中间件中的数据传输格式，其中cmdType供服务中自行区分解析
-//加上发送方的sender_id, 接受的userId
+//加上发送方的sender_id, 接受的userId, 最后接受的userId
+//
 message MsgBody {
-    string sender_id = 1;
-    string cmd_type = 2;
-    bytes msg_bytes = 3;
-    string version = 4;
+    int32 msg_type = 1;
+    string sender_id = 2;
+    string cmd_type = 3;
+    int64 user_id = 4;
+    bytes msg_bytes = 5;
+    string version = 6;
 }
 
 message TokenTcpRequest {

@@ -9,8 +9,11 @@ import (
 	"errors"
 	"fmt"
 	"github.com/golang/protobuf/proto"
+	"log"
 	"net"
+	"net/http"
 	"os"
+	"strconv"
 	"tcpFrame/const"
 	"tcpFrame/datas/proto"
 	"tcpFrame/msg"
@@ -30,11 +33,18 @@ func Open(addr string) (*bufio.ReadWriter, net.Conn, error) {
 
 var userId = int64(10001)
 var userName = "wuxun"
+var token string
 var done chan int
 var connClose chan int
 
 func main() {
 	//go testRbtAndServerRegist()
+
+	//首先通过http请求获取token
+	token = httpGetToken(strconv.FormatInt(userId, 10), userName)
+	if token == "" {
+		log.Fatal("token 获取失败！")
+	}
 	_, conn, err := Open("127.0.0.1:8080")
 	if err != nil {
 		fmt.Println("dial failed:", err)
@@ -97,6 +107,7 @@ func GetToken(rw *bufio.ReadWriter, userId int64, userName string) error {
 			req := &heartbeat.TokenTcpRequest{
 				UserId:   userId,
 				UserName: userName,
+				Password: token,
 				Version:  "v1.0.1",
 			}
 			msg.SendMessage(rw, _const.ST_TOKENLIB, _const.CT_GET_TOKEN, req, userId)
@@ -106,4 +117,29 @@ func GetToken(rw *bufio.ReadWriter, userId int64, userName string) error {
 		}
 	}
 	return nil
+}
+
+func httpGetToken(userId, userName string) string {
+	// 请求token
+	client := &http.Client{}
+
+	//生成要访问的url
+	url := fmt.Sprintf("http://127.0.0.1:8081/getToken?userId=%s&userName=%s", userId, userName)
+	//提交请求
+	reqest, err := http.NewRequest("GET", url, nil)
+
+	if err != nil {
+		panic(err)
+	}
+
+	//处理返回结果
+	response, _ := client.Do(reqest)
+	tokenBData := make([]byte, 1024)
+	n, _ := response.Body.Read(tokenBData)
+	fmt.Println(n, string(tokenBData[:n]), err)
+	if n > 0 && err == nil {
+		fmt.Println("http token:", string(tokenBData[:n]))
+		return string(tokenBData[:n])
+	}
+	return ""
 }

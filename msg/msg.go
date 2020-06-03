@@ -104,7 +104,7 @@ func HandleConnection(conn net.Conn) {
 			serverName := header.ServerType
 
 			// 加工一道，方便业务模块自行进行解析
-			msgBody := ParseMsg2RbtByte(senderId, header.CmdType, msgBytes)
+			msgBody := ParseMsg2RbtByte(senderId, header.CmdType, header.UserId, _const.MT_TCPCONN_SERVER, msgBytes)
 			natsmq.Publish(serverName, msgBody)
 		}
 	}
@@ -204,7 +204,6 @@ func testHandle(msg *nats.Msg){
 	// todo 根据cmdType解析数据，以及在msgBody中添加serverType
 	pb := &heartbeat.TokenTcpRespone{}
 	proto.Unmarshal(hp.MsgBytes, pb)
-	pb.Version = "nats"
 	rw := conns.GetConnByUId(int(pb.UserId)).GetRwBuf()
 	if rw==nil{
 		fmt.Println(util.RunFuncName(), "nil conn!")
