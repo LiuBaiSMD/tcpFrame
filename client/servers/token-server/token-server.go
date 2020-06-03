@@ -16,7 +16,7 @@ import (
 	"tcpFrame/dao"
 	"tcpFrame/datas/proto"
 	"tcpFrame/handle"
-	natsmq "tcpFrame/msgMQ/nats-mq"
+	"tcpFrame/msgMQ/nats-mq"
 	sr "tcpFrame/server-registry"
 	"tcpFrame/util"
 )
@@ -30,12 +30,12 @@ func main() {
 	rdsConn = dao.InitRedis("", "127.0.0.1:6379", 0)
 	sr.ConsulConnect("localhost:8500")
 	serverName := _const.ST_TOKENLIB
-	serverId, _ := sr.RegisterServer(
+	serverId, _ = sr.RegisterServer(
 		"127.0.0.1",
 		0,
 		serverName,
 		[]string{})
-	defer sr.DeRegistry(serverId)
+	fmt.Println("serverId", serverId)
 	//接受从rabbtmq发送过来的数据
 	go natsmq.AsyncNats(serverName, "test", handleMsg)
 	select {}

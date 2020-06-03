@@ -16,6 +16,9 @@ import (
 	"strconv"
 	"strings"
 	"tcpFrame/util"
+	"os"
+	"os/signal"
+	"syscall"
 )
 
 var csCli *consulapi.Client
@@ -29,6 +32,16 @@ func ConsulConnect(consulUrl string) {
 	config := consulapi.DefaultConfig()
 	config.Address = consulUrl
 	csCli, _ = consulapi.NewClient(config)
+}
+
+func DeferDeregistry(serverId string) {
+	c := make(chan os.Signal, 2)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-c //阻塞等待
+		DeRegistry(serverId)
+		os.Exit(0)
+	}()
 }
 
 func RegisterServer(serviceIp string, servicePort int, serviceName string, tags []string) ( string, error) {
@@ -52,7 +65,7 @@ func RegisterServer(serviceIp string, servicePort int, serviceName string, tags 
 	}
 	servers[registration.ID] = registration
 	fmt.Println(util.RunFuncName(), servers)
-
+	go DeferDeregistry(serviceId)
 	return serviceId, nil
 }
 
