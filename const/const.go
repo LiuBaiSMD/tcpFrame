@@ -28,6 +28,7 @@ var (
 
 //服务中的cmd指令类型
 var (
+	CT_LOGIN_WITH_TOKEN = "tokenLogin"
 	CT_GET_TOKEN = "getToken"
 	CT_HEARTBEAT = "heartBeat"
 )
@@ -43,4 +44,11 @@ var (
 //DB_KEY
 var (
 	REDIS_TOKEN_KEY = "userToken"
+)
+
+
+//TOKEN 认证状态
+var (
+	TOKEN_RIGHT int32 = 1
+	TOKEN_WRONG int32 = 0
 )

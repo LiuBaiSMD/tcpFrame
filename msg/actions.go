@@ -36,7 +36,8 @@ func (b *ServerRfAddr) HeartBeat() registry.HttpWR {
 			Code: 200,
 			Version:  "login success!",
 		}
-		SendMessage(rw, _const.ST_TCPCONN, _const.CT_HEARTBEAT, rsp, req.UserId)
+		msgByte, _ := proto.Marshal(rsp)
+		SendMessage(rw, _const.ST_TCPCONN, _const.CT_HEARTBEAT, msgByte, req.UserId)
 		//msgProto := &heartbeat.LoginRequest{}
 
 		//conns.FlushConnLive(BData.UserId)

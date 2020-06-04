@@ -50,9 +50,9 @@ func handleMsg(msg *nats.Msg) {
 	}
 	// 检查token是否正确
 	if !checkToken(strconv.FormatInt(pb.UserId, 10), pb.Password){
-		rpb.Token = "token wrong!"
+		rpb.Result = _const.TOKEN_WRONG
 	}else{
-		rpb.Token = "token success!"
+		rpb.Result = _const.TOKEN_RIGHT
 	}
 
 	rspBytes, _ := proto.Marshal(rpb)

@@ -7,6 +7,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"github.com/golang/protobuf/proto"
 	"log"
 	"net"
 	"tcpFrame/conns"
@@ -78,7 +79,8 @@ func TestReconnect(connMap conns.ConnMap) {
 			LoginState: 1,
 			Oms:        "login success!",
 		}
-		msg.SendMessage(rw, _const.ST_TCPCONN, _const.CT_HEARTBEAT, rsp, 0)
+		msgByte, _ := proto.Marshal(rsp)
+		msg.SendMessage(rw, _const.ST_TCPCONN, _const.CT_HEARTBEAT, msgByte, 0)
 		fmt.Println(util.RunFuncName(), "---->")
 	}
 }

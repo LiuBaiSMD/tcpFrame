@@ -11,15 +11,15 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/nats-io/nats.go"
 	"net"
+	"strconv"
 	configCs "tcpFrame/config/consul"
 	"tcpFrame/conns"
 	"tcpFrame/const"
+	"tcpFrame/dao"
 	"tcpFrame/datas/proto"
-	"tcpFrame/msgMQ"
-	natsmq "tcpFrame/msgMQ/nats-mq"
+	"tcpFrame/msgMQ/nats-mq"
 	"tcpFrame/registry"
 	"tcpFrame/util"
-	"time"
 )
 
 var version = "1.0.1"
@@ -30,6 +30,8 @@ var senderId string
 
 //tcp连接服注册方法
 func InitServer(serverId string) {
+	//初始化数据库
+	dao.InitRedis("", "127.0.0.1:6379", 0)
 	senderId = serverId
 	var rfaddr1 ServerRfAddr
 	register = registry.Registery(&rfaddr1)
@@ -50,13 +52,6 @@ func InitServer(serverId string) {
 
 //tcp连接后处理消息的入口，进行数据解读以及消息分发
 func HandleConnection(conn net.Conn) {
-	//test 模块
-	//在登录成功后，将conn加入到conns连接池中,进行其他行为监听，
-	//先模拟用户userId为100001的连接进入
-	// todo 此部分将移入用户登录模块中
-	userClient := conns.NewClient(10001, conn, 10001)
-	conns.PushChan(10001, userClient)
-
 	//读取的数据通过chan交互
 	rw := bufio.NewReadWriter(bufio.NewReader(conn), bufio.NewWriter(conn))
 	headBytesChan := make(chan []byte, 1)
@@ -92,14 +87,28 @@ func HandleConnection(conn net.Conn) {
 		fmt.Println(util.RunFuncName(), "get header: ", header)
 		//todo 根根据header部分，将数据发送到对应的rabbitmq
 		if header.ServerType == _const.ST_TCPCONN {
-			msg := &heartbeat.LoginRequest{}
-			err := proto.Unmarshal(msgBytes, msg)
-			if err != nil {
-				//协议出错断开连接
-				fmt.Println("get wrong rawData: ", string(msgBytes))
-				closeFlag <- 1
+			fmt.Println("---->tcpConn", header)
+			if header.CmdType == _const.CT_LOGIN_WITH_TOKEN{
+				msg := &heartbeat.TokenTcpRequest{}
+				err := proto.Unmarshal(msgBytes, msg)
+				if err != nil {
+					//协议出错断开连接
+					fmt.Println("get wrong rawData: ", string(msgBytes))
+					closeFlag <- 1
+				}
+				fmt.Println(util.RunFuncName(), "proto: ", msg)
+				if checkToken(strconv.FormatInt(msg.UserId, 10), msg.Password){
+					// 登录成功
+					// todo 此部分将移入用户登录模块中
+					fmt.Println("认证成功！", msg.UserId)
+					userClient := conns.NewClient(int(msg.UserId), conn, int(msg.UserId))
+					conns.PushChan(int(msg.UserId), userClient)
+				}else{
+					fmt.Println("认证失败！", msg.UserId)
+					closeFlag<-1
+				}
 			}
-			fmt.Println(util.RunFuncName(), "proto: ", msg)
+
 		} else {
 			serverName := header.ServerType
 
@@ -110,9 +119,7 @@ func HandleConnection(conn net.Conn) {
 	}
 }
 
-//todo 根据codeType实现封装序列化sendBody的interface{}，将decoding部分脱离出去
-//todo 业务自行序列化sendMsg数据，只传入一个[]byte格式的sendMsg
-func SendMessage(rw *bufio.ReadWriter, serverType, cmdType string, sendMsg proto.Message, userId int64) error {
+func SendMessage(rw *bufio.ReadWriter, serverType, cmdType string, sendMsg []byte, userId int64) error {
 	fmt.Println(util.RunFuncName(), serverType, sendMsg)
 
 	//todo 按照codeType序列化数据
@@ -123,18 +130,18 @@ func SendMessage(rw *bufio.ReadWriter, serverType, cmdType string, sendMsg proto
 		Version:    "v1.0.1",
 	}
 	headerBytes, _ := proto.Marshal(sendHeader)
-	msgBytes, _ := proto.Marshal(sendMsg)
-	bData, _ := BuildData(headerBytes, msgBytes)
+	bData, _ := BuildData(headerBytes, sendMsg)
 	_, err := rw.Write(bData)
 	err1 := rw.Flush()
 	//fmt.Println(util.RunFuncName(), "send data size: ", n, bData)
-	time.Sleep(time.Microsecond * 10)
 	if err != nil || err1 != nil {
 		fmt.Println(util.RunFuncName(), "have err ", err)
 		return err
 	}
 	return nil
 }
+
+
 
 func ReadMessage(rw *bufio.ReadWriter, headBytesChan chan []byte, msgBytesChan chan []byte, closeFlag chan int) {
 	var recieveBytes []byte
@@ -173,42 +180,30 @@ func ReadMessage(rw *bufio.ReadWriter, headBytesChan chan []byte, msgBytesChan c
 	}
 }
 
-func testRspToken() {
-	serverName := _const.ST_TOKENLIB
-	rspServerName := serverName + "res"
-	msgMQ.BindServiceQueue("server1", rspServerName)
-	msgMQ.AddConsumeMsg("server1", rspServerName, "consumer2")
-	rbtMsg, err := msgMQ.GetConsumeMsgChan("server1", rspServerName, "consumer2")
-	if err != nil || rbtMsg == nil {
-		fmt.Println(util.RunFuncName(), err, "没有数据或连接!")
-	} else {
-		for {
-			message := <-rbtMsg
-			pb := &heartbeat.TokenTcpRespone{}
-			proto.Unmarshal(message.Body, pb)
-			rw := conns.GetConnByUId(int(pb.UserId)).GetRwBuf()
-			if rw==nil{
-				fmt.Println(util.RunFuncName(), "nil conn!")
-				continue
-			}
-			SendMessage(rw, _const.ST_TOKENLIB, _const.CT_GET_TOKEN, pb, 10001)
-			fmt.Println(util.RunFuncName(), "send: ", pb)
-		}
-	}
-}
-
 func testHandle(msg *nats.Msg){
 	hp := &heartbeat.MsgBody{}
 	proto.Unmarshal(msg.Data, hp)
 	//fmt.Println(util.RunFuncName(), "hp:", hp)
+
 	// todo 根据cmdType解析数据，以及在msgBody中添加serverType
 	pb := &heartbeat.TokenTcpRespone{}
+	if pb.Result == _const.TOKEN_RIGHT{
+
+	}
 	proto.Unmarshal(hp.MsgBytes, pb)
 	rw := conns.GetConnByUId(int(pb.UserId)).GetRwBuf()
 	if rw==nil{
 		fmt.Println(util.RunFuncName(), "nil conn!")
 		return
 	}
-	SendMessage(rw, _const.ST_TOKENLIB, hp.CmdType, pb, 10001)
-	fmt.Println(util.RunFuncName(), "send to user: ", pb.UserId, pb)
+	msgByte, _ := proto.Marshal(pb)
+	SendMessage(rw, _const.ST_TOKENLIB, hp.CmdType, msgByte, hp.UserId)
+}
+
+func checkToken(userId, token string) bool {
+	rdsToken, err := dao.GetuserToken(userId)
+	if rdsToken == token && err == nil {
+		return true
+	}
+	return false
 }
