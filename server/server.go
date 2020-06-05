@@ -40,7 +40,6 @@ func main() {
 	if err != nil {
 		log.Fatalf("listen %s fail: %s", addr, err)
 	}
-	fmt.Println(util.RunFuncName(), err)
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
@@ -56,10 +55,10 @@ func testConn() {
 		time.Sleep(time.Second)
 		conn := conns.GetConnByUId(10001)
 		if conn != nil {
-			fmt.Println(util.RunFuncName(), "have conn")
+			log.Println(util.RunFuncName(), "have conn")
 			continue
 		}
-		fmt.Println(util.RunFuncName(), "have not conn , conn lengt= ", conns.LenthConn())
+		log.Println(util.RunFuncName(), "have not conn , conn length= ", conns.LenthConn())
 	}
 }
 

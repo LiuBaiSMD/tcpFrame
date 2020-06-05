@@ -32,7 +32,7 @@ func getToken(w http.ResponseWriter, r *http.Request) {
 		fmt.Println(r.Body, r.Form)
 		userId1, ok4 := r.Form["userId"]
 		userName1, ok5 := r.Form["userName"]
-		fmt.Println(userId1, userName1, ok4, ok5)
+		log.Println(userId1, userName1, ok4, ok5)
 
 	}
 
@@ -48,7 +48,7 @@ func getToken(w http.ResponseWriter, r *http.Request) {
 	// 首先获取用户token
 	token, err := dao.GetuserToken(userId)
 	if token!="" && err==nil{
-		fmt.Println("just get")
+		log.Println("just get")
 		fmt.Fprint(w, token)
 		return
 	}
