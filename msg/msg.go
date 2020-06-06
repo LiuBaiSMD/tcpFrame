@@ -9,7 +9,6 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/golang/protobuf/proto"
-	"github.com/nats-io/nats.go"
 	"log"
 	"net"
 	configCs "tcpFrame/config/consul"
@@ -20,7 +19,6 @@ import (
 	"tcpFrame/msgMQ/nats-mq"
 	"tcpFrame/registry"
 	"tcpFrame/util"
-	"strconv"
 )
 
 var version = "v1.0.1"
@@ -29,7 +27,7 @@ var serverConfigs map[string][]configCs.ServerRegistry
 
 var senderId string
 
-//tcp连接服注册方法
+//tcpConn连接服注册方法
 func InitServer(serverId string) {
 	//初始化数据库
 	dao.InitRedis("", "127.0.0.1:6379", 0)
@@ -110,10 +108,24 @@ func HandleConnection(conn net.Conn) {
 	}
 }
 
+// dispatch根据cmdType进行处理
+func dispatch(userId int, cmdType string, msgBytes []byte) error {
+	// 首先检查是否有这个连接，没有则直接返回
+	rw := conns.GetConnByUId(userId).GetRwBuf()
+	if rw == nil {
+		log.Println(util.RunFuncName(), "nil conn")
+		return errors.New("empty conn!")
+	}
+	handleFunc, ok := register.FuncRegistry[cmdType]
+	if !ok {
+		return errors.New("error cmdType:" + cmdType)
+	}
+	err := handleFunc(rw, msgBytes)
+	return err
+}
+
 // 发送消息到io管道中，需要携带参数服务类型 指令类型 消息（字节格式） 发送的用户Id
 func SendMessage(rw *bufio.ReadWriter, serverType, cmdType string, sendMsg []byte, userId int64) error {
-	log.Println(util.RunFuncName(), serverType, sendMsg)
-
 	sendHeader := &heartbeat.RequestHeader{
 		UserId:     userId,
 		ServerType: serverType,
@@ -165,58 +177,3 @@ func ReadMessage(rw *bufio.ReadWriter, headBytesChan chan []byte, msgBytesChan c
 	}
 }
 
-// 根据msgBody中的userId获取连接并发送数据
-func handleNatsMsg(msg *nats.Msg) {
-	hp := &heartbeat.MsgBody{}
-	proto.Unmarshal(msg.Data, hp)
-	rw := conns.GetConnByUId(int(hp.UserId)).GetRwBuf()
-	if rw == nil {
-		log.Println(util.RunFuncName(), "nil conn!")
-		return
-	}
-	SendMessage(rw, _const.ST_TOKENLIB, hp.CmdType, hp.MsgBytes, hp.UserId)
-}
-
-func checkToken(userId, token string) bool {
-	rdsToken, err := dao.GetuserToken(userId)
-	if rdsToken == token && err == nil {
-		return true
-	}
-	return false
-}
-
-// dispatch根据cmdType进行处理
-func dispatch(userId int, cmdType string, msgBytes []byte) error {
-	// 首先检查是否有这个连接，没有则直接返回
-	rw := conns.GetConnByUId(userId).GetRwBuf()
-	if rw == nil {
-		log.Println(util.RunFuncName(), "nil conn")
-		return errors.New("empty conn!")
-	}
-	handleFunc, ok := register.FuncRegistry[cmdType]
-	if !ok {
-		return errors.New("error cmdType:" + cmdType)
-	}
-	err := handleFunc(rw, msgBytes)
-	return err
-}
-
-func handleTokenLogin(conn net.Conn, userId int64, msgBytes []byte) error {
-	msg := &heartbeat.TokenTcpRequest{}
-	err := proto.Unmarshal(msgBytes, msg)
-	if err != nil {
-		//协议出错断开连接
-		log.Println("get wrong rawData: ", string(msgBytes))
-		return errors.New("get wrong rawData: " + string(msgBytes))
-	}
-	if checkToken(strconv.FormatInt(userId, 10), msg.Password) {
-		// 登录成功
-		log.Println("认证成功！", userId)
-		userClient := conns.NewClient(int(userId), conn, int(msg.UserId))
-		conns.PushChan(int(userId), userClient)
-	} else {
-		log.Println("认证失败！", userId)
-		return errors.New("认证失败:" + string(userId))
-	}
-	return nil
-}

@@ -9,165 +9,130 @@
 
 # 项目结构
 ```
-├── client      #客户端连接代码
-├── config      #配置中心
-├── conns       #连接管理
-├── const       #常量存储
-├── dao         #数据库中心
-├── datas       #数据结构管理
-├── handle      #处理方法
-├── msg         #tcp消息监听、解析、分发
-├── registry    #处理方法注册中心
-├── server      #服务端启动代码
-└── util        #自定义工具
+.
+├── client          #客户端连接代码
+├── config          #配置中心
+├── conns           #连接管理
+├── const           #常量存储
+├── dao             #数据库中心
+├── datas           #数据结构管理
+├── doc             #文档说明
+├── handle          #处理方法
+├── msg             #tcp消息监听、解析、分发
+├── msgMQ           #消息中间件
+├── registry        #处理方法注册（类似于装饰器）
+├── server          #客户端使用代码
+├── server-registry #服务注册
+└── util            #使用的工具
 ```
 
 # 系统结构图
 ![avatar](https://github.com/LiuBaiSMD/tcpFrame/blob/master/doc/TcpFrame.jpg?raw=true)
 
-## 1.发送普通字符串二进制数据进行输出
-
-## 2.tcp认证
-### ①建立tcp连接
-### ②启动login登录认证
-### ③认证失败关闭连接
-### ④认证成功加入管理队列
-
-## 3.管理队列
-### ①加入心跳机制
+# 系统功能
+## 1.建立用户与服务端tcp连接，自行解析包
 ```
-成功登陆后，开启心跳检测
+①使用protobuf，对用户发送的tcp连接进行序列化反序列化处理
+②包的解析：
+ tcp中传输的二进制数据可以概括为
+ 头部长度（四个字节）+ 消息长度（四个字节）+ 头部二进制数据(proto格式RequestHeader) + 消息二进制数据(proto格式TokenTcpRequest)
 ```
-### ②掉线断开连接
+## 2.进行用户验证，管理用户tcp连接
 ```
-掉线关闭程序，使用管道同学关闭信号
-```
-### ③断线重连机制
-```
-1.模拟建立通信
-2.在通信过程中断开连接
-3.期间不断建立通信
-4.断开的client带着userId重连
-5.恢复之前的通信
-```
-### ④断线后从连接队列中删除
-
-## 4.心跳管理 
-### ①管理连接的时间戳，建立连接的时间
-### ②超时将删除连接
-```
-超过三次心跳没有发送心跳包的连接将会被关闭
+①用户连接后，通过http请求获得token通行证
+②用户使用token通行证，在连接tcp后，发送第一次请求时，请求token方式连接
+③tcpConn服通过验证后对连接进行统一管理，并设置生命周期，服务端需要自行发送心跳包heartBeat
+④通过心跳包进行用户管理，超时连接将关闭
 ```
 
-## 5.改进包协议
-### ①在打包协议时将标志位进行打包
+## 3.微服务集群
 ```
-data = {
-	Action string
-	Name string
-	PWD string
-	UserId int
-}
-
-转换成二进制数据
-
-bData = []byte(data)
-
-{
-    LoadCode:1
-    BytesData:bData
-}
+①用户通过tcp连接后，只需要发送服务的名字serverType以及指令名称cmdType,便可请求对应的服务；
+②服务的集群可以自由创建删除，并且对用户的连接无任何影响
 ```
-### ②通过标志位控制解析包
-
-### ③将方法注册到msg-registry中
-
-### ④自动根据action，找到对应的msg-registry，进行处理
-
-## 6.改进数据包传输协议
-### ①增加组装传输数据的接口
 ```
-总共分为两层
-1.(第一层解析)数据包长度dataLenth（32位 []byte）+ 编码类型codeType（8位 []byte）+ 数据data（[]byte）
-dataLenth:存储data长度
-codeType:基础解析格式，标识解析data的方式，json、proto等通用的格式
-data:数据内容
+微服务搭建：
+微服务参考 clinet/server/token-server
+1.连接对应的consul，进行consul服务连接
+server-registry.ConsulConnect("localhost:8500")
+2.进行服务注册，注册服务的ip、端口、服务名字、tags
+serverId, _ = server-registry.RegisterServer(
+	"127.0.0.1",
+	0,
+	serverName,
+	[]string{})
+3.订阅消息频道（消息格式MsgBody， 通过其中的CmdType供业务自行解析）
+订阅自己serverName的频道：接收公共服务的消息
+go natsmq.AsyncNats(serverName, serverName, handleNatsMsg)
+订阅自己serverId的频道：接收定向消息
+go natsmq.AsyncNats(serverId, serverId, handleNatsMsg)
 
-2.(第二层解析)解析data模块，将data分解成各个类型json、proto等的BaseData后，其中的Action数据为指导业务层自行解析的模块，比如
-例① json中的BaseData结构:
-type BaseData struct{
-    Action string,
-    UserId int,
-    BData []byte,
-}
+handleNatsMsg为微服务中需要接收到消息后处理的方法
+```
 
-json中的HeartBeat结构:
-type HeartBeat struct{
-    Action string,
-    UserId int,
-    TimeStamp int,
-    OtherMsg string,
-}
+## 4.配置管理
+```
+连接consul后
+使用config/consul中的方法，上传固定文件到指定路径
+使用config/consul中的方法，获取指定路径的配置数据
+```
 
-例如在上述拆包过程中codeType=1代表json格式数据，将data解析为json的BaseData格式:得到以下数据
-data = {
-        Action:"Heartbeat",
-        UserId:10001,
-        BData:[12, 23, 45, 234, 54, 65],
-        }
-(第三层解析)然后业务层通过Action将指导BData解析为已经定义好的json结构 HeartBeat
-BData = {
-    Action: HeartBeat,
-    UserId: 10001,
-    TimeStamp: 123456789,
-    OtherMsg: "hello world!",
-}
-
-例②
-proto中的BaseData结构:
-message BaseData {
-    string Action = 1;
-    int64 UserId = 2;
-    bytes BData = 3;
-}
-
-proto中的HeartBeat结构:
-message HeartBeat {
-    string Action = 1;
-    int64 UserId = 2;
-    int64 TimeStamp = 3;
-    string OtherMsg = 4;
-}
-
-例如在上述拆包过程中codeType=2代表proto格式数据，将data解析为proto的BaseData格式:得到以下数据
-data = {
-        Action:"Heartbeat",
-        UserId:10001,
-        BData:[12, 23, 45, 234, 54, 65],
-        }
-(第三层解析)然后业务层通过Action将BData解析为已经定义好的proto结构 HeartBeat，
-BData = {
-    Action: HeartBeat,
-    UserId: 10001,
-    TimeStamp: 123456789,
-    OtherMsg: "hello world!",
-}
+## 5.消息中间件
+```
+消息中间件有rabbitmq、nats两种，由于业务暂时比较简单，目前只需使用nats即可
+    go natsmq.AsyncNats(serverName, workGroup, handleNatsMsg)
+    func handleNatsMsg(msg *nats.Msg) {}
+监听serverName频道，加入workGroup组，并将消息自动加入handlleNatsMsg处理
 
 ```
 
-## 7.使用教程
-### 启动server/server.go
+## 6.数据传输格式
+```
+使用proto数据进行传输，各个服务需要在使用时自行定义服务名字serverName，以及CmdType对应的proto结构体
+并使用 proto --proto_path=. --go_out=. you_proto_file_name.proto，生成对应.go文件
+```
+
+## 7.registry模块，方法注册使用
+```
+registry使用反射的方式将对应的方法注册成map[funcName]func，使用参考registry test模块
+```
+
+# 使用教程
+
+## 安装环境
+```
+安装nats
+安装consul
+安装rabbitmq
+安装redis
+安装mongo
+
+在主目录下 ./tcpFrame中执行
+go mod tidy
+```
+## 启动插件服务
+```
+请确保使用默认ip、端口 todo 使用配置构造
+sh ./tcpFrame/doc/start_plugin.sh
+```
+
+## 启动tcp链接服，tcpConn主服务，server/server.go
 ```
 使用go mod tidy下载依赖包
 1.启动rabbitmq 本地启动rabbitmq 使用默认端口
 2.启动consul 本地启动consul ： consul agent -dev
-3.启动server/server.go : go run server.go
+3.启动go run ./tcpFrame/server/server.go
 ```
 
-### 启动client 模拟用户请求
+## 启动http-token token管理http服务
+```
+go run ./tcpFrame/client/http-token/http-token.go
+```
+
+## 启动client 模拟用户请求
 ```
 1.启动client中的client，模拟客户端请求
 go run clinet
 2.启动client中的token-server,模拟服务集群中的token生成服务
-go run client/token-server.go
+go run ./tcpFrame/client/token-server.go
 ```

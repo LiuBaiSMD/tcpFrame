@@ -106,7 +106,7 @@ func loginWithToken(rw *bufio.ReadWriter, userId int64, userName string) error {
 		UserId:   userId,
 		UserName: userName,
 		Password: token,
-		Version:  "v1.0.1",
+		Version:  "v1.1.1",
 	}
 	msgByte, _ := proto.Marshal(req)
 	msg.SendMessage(rw, _const.ST_TCPCONN, _const.CT_LOGIN_WITH_TOKEN, msgByte, userId)
