@@ -50,7 +50,7 @@ func SaveUserToken(userId, tokenStr string) error {
 
 func GetuserToken(userId string) (string, error) {
 	token, err := rdsConn.Get(buildTokenKey(userId)).Result()
-	fmt.Println(util.RunFuncName(), token, err)
+	fmt.Println(util.RunFuncName(), userId, token, err)
 	if err != nil {
 		return "", err
 	}

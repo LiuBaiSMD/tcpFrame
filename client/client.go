@@ -75,8 +75,9 @@ func main() {
 	connClose = make(chan int, 1)
 	rw := bufio.NewReadWriter(bufio.NewReader(conn), bufio.NewWriter(conn))
 	loginWithToken(rw, userId, userName)
-	//go Heartbeat(userId, rw, connClose)
+	go Heartbeat(userId, rw, connClose)
 	<-connClose
+	os.Exit(2)
 }
 
 func Heartbeat(userId int64, rw *bufio.ReadWriter, closeFlag chan int) error {
@@ -89,7 +90,7 @@ func Heartbeat(userId int64, rw *bufio.ReadWriter, closeFlag chan int) error {
 				Version: "v1.0.1",
 			}
 			msgByte, _ := proto.Marshal(req)
-			err := msg.SendMessage(rw, _const.ST_TOKENLIB, _const.CT_GET_TOKEN, msgByte, userId)
+			err := msg.SendMessage(rw, _const.ST_TCPCONN, _const.CT_HEARTBEAT, msgByte, userId)
 			if err != nil {
 				fmt.Println(util.RunFuncName(), " : ", err)
 				closeFlag <- 1
@@ -101,23 +102,14 @@ func Heartbeat(userId int64, rw *bufio.ReadWriter, closeFlag chan int) error {
 }
 
 func loginWithToken(rw *bufio.ReadWriter, userId int64, userName string) error {
-	timer := time.NewTicker(time.Second * time.Duration(_const.HEARTBEAT_INTERVAL))
-	for {
-		select {
-		case <-timer.C:
-			req := &heartbeat.TokenTcpRequest{
-				UserId:   userId,
-				UserName: userName,
-				Password: token,
-				Version:  "v1.0.1",
-			}
-			msgByte, _ := proto.Marshal(req)
-			msg.SendMessage(rw, _const.ST_TCPCONN, _const.CT_LOGIN_WITH_TOKEN, msgByte, userId)
-			// 获取一个token
-
-
-		}
+	req := &heartbeat.TokenTcpRequest{
+		UserId:   userId,
+		UserName: userName,
+		Password: token,
+		Version:  "v1.0.1",
 	}
+	msgByte, _ := proto.Marshal(req)
+	msg.SendMessage(rw, _const.ST_TCPCONN, _const.CT_LOGIN_WITH_TOKEN, msgByte, userId)
 	return nil
 }
 

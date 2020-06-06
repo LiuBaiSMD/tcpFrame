@@ -28,9 +28,10 @@ var (
 
 //服务中的cmd指令类型
 var (
-	CT_LOGIN_WITH_TOKEN = "tokenLogin"
+	CT_LOGIN_WITH_TOKEN = "TokenLogin"
 	CT_GET_TOKEN = "getToken"
-	CT_HEARTBEAT = "heartBeat"
+	CT_HEARTBEAT = "HeartBeat"
+	CT_COMMUNICATE = "Communicate"
 )
 
 //服务中的msgBody类型

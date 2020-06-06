@@ -24,3 +24,8 @@ type RabbitmqConfig struct {
 	LoginName string `json:"LoginName"`
 	Password string `json:"Password"`
 }
+
+type TcpConn struct {
+	Ip string `json:"Ip"`
+	Port int `json:"Port"`
+}

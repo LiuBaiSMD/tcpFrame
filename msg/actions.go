@@ -9,7 +9,8 @@ package msg
 import (
 	"bufio"
 	"github.com/golang/protobuf/proto"
-	"github.com/micro/go-micro/util/log"
+	"log"
+	"tcpFrame/conns"
 	"tcpFrame/const"
 	"tcpFrame/datas/proto"
 	"tcpFrame/registry"
@@ -21,7 +22,7 @@ type ServerRfAddr struct {
 
 func (b *ServerRfAddr) Communicate() registry.HttpWR {
 	return func(rw *bufio.ReadWriter, BData []byte) error {
-		log.Log("method:", util.RunFuncName()) //获取请求的方法
+		log.Println("method:", util.RunFuncName()) //获取请求的方法
 		return nil
 	}
 }
@@ -29,18 +30,21 @@ func (b *ServerRfAddr) Communicate() registry.HttpWR {
 func (b *ServerRfAddr) HeartBeat() registry.HttpWR {
 	return func(rw *bufio.ReadWriter, BData []byte) error {
 		req := &heartbeat.HeartBeatReq{}
-		proto.Unmarshal(BData, req)
-		log.Log("method:", util.RunFuncName(), req) //获取请求的方法
+		err := proto.Unmarshal(BData, req)
+		if err!=nil{
+			return err
+		}
+		log.Println(util.RunFuncName(), req) //获取请求的方法
 
 		rsp := &heartbeat.HeartBeatRsp{
 			Code: 200,
-			Version:  "login success!",
+			Version:  version,
 		}
 		msgByte, _ := proto.Marshal(rsp)
 		SendMessage(rw, _const.ST_TCPCONN, _const.CT_HEARTBEAT, msgByte, req.UserId)
 		//msgProto := &heartbeat.LoginRequest{}
 
-		//conns.FlushConnLive(BData.UserId)
+		conns.FlushConnLive(int(req.UserId))
 		return nil
 	}
 }

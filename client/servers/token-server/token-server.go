@@ -32,12 +32,14 @@ func main() {
 		serverName,
 		[]string{})
 	fmt.Println("serverId", serverId)
-	//接受从rabbtmq发送过来的数据
-	go natsmq.AsyncNats(serverName, "test", handleMsg)
+	// 订阅一个整个服务的频道
+	go natsmq.AsyncNats(serverName, serverName, handleNatsMsg)
+	// 订阅一个自己serverId专属的频道
+	go natsmq.AsyncNats(serverId, serverId, handleNatsMsg)
 	select {}
 }
 
-func handleMsg(msg *nats.Msg) {
+func handleNatsMsg(msg *nats.Msg) {
 	msgBody := &heartbeat.MsgBody{}
 	err := proto.Unmarshal(msg.Data, msgBody)
 	revieverId := msgBody.SenderId

@@ -7,12 +7,11 @@ package msg
 import (
 	"bufio"
 	"encoding/json"
-	"fmt"
+	"errors"
 	"github.com/golang/protobuf/proto"
 	"github.com/nats-io/nats.go"
 	"log"
 	"net"
-	"strconv"
 	configCs "tcpFrame/config/consul"
 	"tcpFrame/conns"
 	"tcpFrame/const"
@@ -21,9 +20,10 @@ import (
 	"tcpFrame/msgMQ/nats-mq"
 	"tcpFrame/registry"
 	"tcpFrame/util"
+	"strconv"
 )
 
-var version = "1.0.1"
+var version = "v1.0.1"
 var register *registry.Base
 var serverConfigs map[string][]configCs.ServerRegistry
 
@@ -48,7 +48,7 @@ func InitServer(serverId string) {
 	serverConfigs[_const.ST_MULTI] = mJ
 
 	//消息中间件订阅
-	natsmq.AsyncNats(serverId, serverId, testHandle)
+	natsmq.AsyncNats(serverId, serverId, handleNatsMsg)
 }
 
 //tcp连接后处理消息的入口，进行数据解读以及消息分发
@@ -79,34 +79,28 @@ func HandleConnection(conn net.Conn) {
 
 		header := &heartbeat.RequestHeader{}
 		err := proto.Unmarshal(headBytes, header)
-		if err != nil {
+		if err != nil || header.UserId == 0 {
 			//协议出错断开连接
 			log.Println("get wrong header: ", string(headBytes))
 			closeFlag <- 1
 		}
-		//todo 根根据header部分，将数据发送到对应的rabbitmq
 		if header.ServerType == _const.ST_TCPCONN {
+
+			// 单独处理token登录部分
 			if header.CmdType == _const.CT_LOGIN_WITH_TOKEN {
-				msg := &heartbeat.TokenTcpRequest{}
-				err := proto.Unmarshal(msgBytes, msg)
+				err := handleTokenLogin(conn, header.UserId, msgBytes)
 				if err != nil {
-					//协议出错断开连接
-					log.Println("get wrong rawData: ", string(msgBytes))
 					closeFlag <- 1
 				}
-				if checkToken(strconv.FormatInt(msg.UserId, 10), msg.Password) {
-					// 登录成功
-					// todo 此部分将移入用户登录模块中
-					fmt.Println("认证成功！", msg.UserId)
-					userClient := conns.NewClient(int(msg.UserId), conn, int(msg.UserId))
-					conns.PushChan(int(msg.UserId), userClient)
-				} else {
-					log.Println("认证失败！", msg.UserId)
+			} else {
+				err := dispatch(int(header.UserId), header.CmdType, msgBytes)
+				if err != nil {
 					closeFlag <- 1
 				}
 			}
 
 		} else {
+			//根根据header，指定的serverType部分，将数据发送到对应的nats频道
 			serverName := header.ServerType
 
 			// 加工一道，方便业务模块自行进行解析
@@ -120,12 +114,11 @@ func HandleConnection(conn net.Conn) {
 func SendMessage(rw *bufio.ReadWriter, serverType, cmdType string, sendMsg []byte, userId int64) error {
 	log.Println(util.RunFuncName(), serverType, sendMsg)
 
-	//todo 按照codeType序列化数据
 	sendHeader := &heartbeat.RequestHeader{
 		UserId:     userId,
 		ServerType: serverType,
 		CmdType:    cmdType,
-		Version:    "v1.0.1",
+		Version:    version,
 	}
 	headerBytes, _ := proto.Marshal(sendHeader)
 	bData, _ := BuildData(headerBytes, sendMsg)
@@ -172,25 +165,16 @@ func ReadMessage(rw *bufio.ReadWriter, headBytesChan chan []byte, msgBytesChan c
 	}
 }
 
-func testHandle(msg *nats.Msg) {
+// 根据msgBody中的userId获取连接并发送数据
+func handleNatsMsg(msg *nats.Msg) {
 	hp := &heartbeat.MsgBody{}
 	proto.Unmarshal(msg.Data, hp)
-
-	// todo 根据cmdType解析数据，以及在msgBody中添加serverType
-	pb := &heartbeat.TokenTcpRespone{}
-	if pb.Result == _const.TOKEN_RIGHT {
-
-	}
-	if err := proto.Unmarshal(hp.MsgBytes, pb); err != nil {
-		return
-	}
-	rw := conns.GetConnByUId(int(pb.UserId)).GetRwBuf()
+	rw := conns.GetConnByUId(int(hp.UserId)).GetRwBuf()
 	if rw == nil {
 		log.Println(util.RunFuncName(), "nil conn!")
 		return
 	}
-	msgByte, _ := proto.Marshal(pb)
-	SendMessage(rw, _const.ST_TOKENLIB, hp.CmdType, msgByte, hp.UserId)
+	SendMessage(rw, _const.ST_TOKENLIB, hp.CmdType, hp.MsgBytes, hp.UserId)
 }
 
 func checkToken(userId, token string) bool {
@@ -199,4 +183,40 @@ func checkToken(userId, token string) bool {
 		return true
 	}
 	return false
+}
+
+// dispatch根据cmdType进行处理
+func dispatch(userId int, cmdType string, msgBytes []byte) error {
+	// 首先检查是否有这个连接，没有则直接返回
+	rw := conns.GetConnByUId(userId).GetRwBuf()
+	if rw == nil {
+		log.Println(util.RunFuncName(), "nil conn")
+		return errors.New("empty conn!")
+	}
+	handleFunc, ok := register.FuncRegistry[cmdType]
+	if !ok {
+		return errors.New("error cmdType:" + cmdType)
+	}
+	err := handleFunc(rw, msgBytes)
+	return err
+}
+
+func handleTokenLogin(conn net.Conn, userId int64, msgBytes []byte) error {
+	msg := &heartbeat.TokenTcpRequest{}
+	err := proto.Unmarshal(msgBytes, msg)
+	if err != nil {
+		//协议出错断开连接
+		log.Println("get wrong rawData: ", string(msgBytes))
+		return errors.New("get wrong rawData: " + string(msgBytes))
+	}
+	if checkToken(strconv.FormatInt(userId, 10), msg.Password) {
+		// 登录成功
+		log.Println("认证成功！", userId)
+		userClient := conns.NewClient(int(userId), conn, int(msg.UserId))
+		conns.PushChan(int(userId), userClient)
+	} else {
+		log.Println("认证失败！", userId)
+		return errors.New("认证失败:" + string(userId))
+	}
+	return nil
 }

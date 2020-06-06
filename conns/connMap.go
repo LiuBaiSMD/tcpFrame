@@ -36,7 +36,7 @@ func init() {
 	connIDCreator <- 1
 	dao.Init()
 	//关闭心跳检测
-	//go manageConnLive()
+	go manageConnLive()
 }
 
 func PushChan(connID int, connValue interface{}){
