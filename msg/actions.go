@@ -84,14 +84,6 @@ func handleTokenLogin(conn net.Conn, userId int64, msgBytes []byte) error {
 	}
 	if checkToken(strconv.FormatInt(userId, 10), msg.Password) {
 		// 登录成功
-
-		// 如果已经有了连接，先断开此链接
-		oldConnCli := conns.GetConnByUId(int(userId))
-		if oldConnCli!=nil{
-			oldConn := oldConnCli.GetConn()
-			oldConn.Close()
-		}
-
 		log.Println("认证成功！", userId)
 		userClient := conns.NewClient(int(userId), conn, int(msg.UserId))
 		conns.PushChan(int(userId), userClient)

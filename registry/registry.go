@@ -8,8 +8,9 @@ package registry
 
 import (
 	"bufio"
-	"fmt"
+	"log"
 	"reflect"
+	"tcpFrame/util"
 )
 type ControllerMapsType map[string]reflect.Value
 type HttpWR  func(w *bufio.ReadWriter,BData []byte) error
@@ -35,7 +36,7 @@ func Registery(handles interface{})*Base{
 	vft := vf.Type()
 	//读取方法数量
 	mNum := vf.NumMethod()
-	fmt.Println("NumMethod:", mNum)
+	log.Println(util.RunFuncName(), "NumMethod:", mNum)
 	//遍历路由器的方法，并将其存入控制器映射变量中
 	for i := 0; i < mNum; i++ {
 		mName := vft.Method(i).Name
@@ -45,12 +46,13 @@ func Registery(handles interface{})*Base{
 		if ifOK {
 			//panic("重复注册方法 -----> " + mName)
 		}
+		log.Println("FuncRegistry: ---->", mName)
 		register.FuncRegistry[mName] = f[0].Interface().(HttpWR)
 	}
 	if len(register.FuncRegistry) == 0{
 		return nil
 	}
-	fmt.Println("FuncRegistry: ---->", register.FuncRegistry)
+
 	return register
 }
 

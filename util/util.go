@@ -178,3 +178,21 @@ func CheckOKs(oks ...bool) bool {
 	}
 	return true
 }
+
+func CheckNils(n ...interface{}) bool {
+	for _, i := range n {
+		if i != nil{
+			return false
+		}
+	}
+	return true
+}
+
+func CheckNotNils(n ...interface{}) bool {
+	for _, i := range n {
+		if i == nil{
+			return false
+		}
+	}
+	return true
+}

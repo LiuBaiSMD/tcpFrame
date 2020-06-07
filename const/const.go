@@ -15,6 +15,10 @@ var HEARTBEAT_INTERVAL int = 5
 
 //记录数据长度的大小的字节数量
 var LEN_INFO_BYTE_SIZE int = 4
+
+//同时连接的最大数量
+var MAX_CONNS_LENGTH = 10000
+
 var (
 	ST_MULTI  = "multi"
 	ST_SINGLE = "single"

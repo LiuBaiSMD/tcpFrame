@@ -5,32 +5,50 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
-	"github.com/golang/protobuf/proto"
 	"log"
 	"net"
+	"tcpFrame/config/consul"
 	"tcpFrame/conns"
 	"tcpFrame/const"
-	"tcpFrame/datas/proto"
 	"tcpFrame/msg"
 	"tcpFrame/server-registry"
 	"tcpFrame/util"
 	"time"
 )
 
+//本服务注册使用的ip和端口
+var ipAddr string = "127.0.0.1"
+var port int = 8080
+
 func main() {
-	go testConn()
-	server_registry.ConsulConnect("localhost:8500")
-	serverId, err := server_registry.RegisterServer("127.0.0.1", 8080, _const.ST_TCPCONN, []string{"tcpConn"})
-	if err != nil{
+	go countConn()
+
+	//先从服务器获取配置
+	consulCfg, err := consul.GetConsulCfg(_const.CONSUL_IP, _const.CONSUL_PORT)
+	natsCfg, err1 := consul.GetNatsCfg(_const.CONSUL_IP, _const.CONSUL_PORT)
+	redisCfg, err2 := consul.GetRedisCfg(_const.CONSUL_IP, _const.CONSUL_PORT)
+	if util.CheckNils(consulCfg, natsCfg, redisCfg)||util.CheckNotNils(err, err1, err2) {
+		panic("config error!")
+	}
+
+	//注册服务
+	server_registry.ConsulConnect(fmt.Sprintf("%s:%d", consulCfg.Ip, consulCfg.Port))
+	serverId, err := server_registry.RegisterServer(ipAddr, port, _const.ST_TCPCONN, []string{"tcpConn"})
+	if err != nil {
 		log.Fatalln("服务注册失败： ", _const.ST_TCPCONN)
 	}
 	defer server_registry.DeRegistry(serverId)
-	msg.InitServer(serverId)
-	//go testTcp.TestReconnect(conns.GetCMap())
-	addr := "127.0.0.1:8080"
 
+	//启动服务
+	msg.InitServer(serverId,
+		msg.SetRedisCfg(*redisCfg),
+		msg.SetConsulCfg(*consulCfg),
+		msg.SetNatsCfg(*natsCfg),
+	)
+	addr := fmt.Sprintf("%s:%d", ipAddr, port)
+
+	// 先检测是否已经使用或者已启动
 	tcpAddr, err := net.ResolveTCPAddr("tcp", addr)
 	if err != nil {
 		log.Fatalf("net.ResovleTCPAddr fail:%s", addr)
@@ -50,36 +68,11 @@ func main() {
 	}
 }
 
-func testConn() {
+func countConn() {
 	for {
 		time.Sleep(time.Second)
-		conn := conns.GetConnByUId(10001)
-		if conn != nil {
-			log.Println(util.RunFuncName(), "have conn")
-			continue
-		}
-		log.Println(util.RunFuncName(), "have not conn , conn length= ", conns.LenthConn())
+		log.Println(util.RunFuncName(), "conn length = ", conns.LenthConn())
 	}
 }
 
-func TestReconnect(connMap conns.ConnMap) {
-	for {
-		fmt.Println("---->", util.RunFuncName())
-		time.Sleep(time.Second * 3)
-		connClinet := conns.GetConnByUId(10001)
-		if connClinet == nil {
-			continue
-		}
-		conn := connClinet.GetConn()
-		rw := bufio.NewReadWriter(bufio.NewReader(conn), bufio.NewWriter(conn))
-		rsp := &heartbeat.LoginRespone{
-			UserId:     0,
-			Code:       200,
-			LoginState: 1,
-			Oms:        "login success!",
-		}
-		msgByte, _ := proto.Marshal(rsp)
-		msg.SendMessage(rw, _const.ST_TCPCONN, _const.CT_HEARTBEAT, msgByte, 0)
-		fmt.Println(util.RunFuncName(), "---->")
-	}
-}
+

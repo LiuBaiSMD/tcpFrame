@@ -11,6 +11,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/nats-io/nats.go"
 	"strconv"
+	"tcpFrame/config/consul"
 	"tcpFrame/const"
 	"tcpFrame/dao"
 	"tcpFrame/datas/proto"
@@ -23,8 +24,12 @@ var serverId string
 
 func main() {
 	//初始化数据库
-	dao.InitRedis("", "127.0.0.1:6379", 0)
-	sr.ConsulConnect("localhost:8500")
+	sr.ConsulConnect(_const.CONSUL_URL)
+	redisConfig, err := consul.GetRedisCfg(_const.CONSUL_IP, _const.CONSUL_PORT)
+	if redisConfig == nil || err != nil {
+		panic("redis config err:" + err.Error())
+	}
+	dao.InitRedis(redisConfig.Password, fmt.Sprintf("%s:%d", redisConfig.Ip, redisConfig.Port), redisConfig.DB)
 	serverName := _const.ST_TOKENLIB
 	serverId, _ = sr.RegisterServer(
 		"127.0.0.1",
@@ -51,9 +56,9 @@ func handleNatsMsg(msg *nats.Msg) {
 		UserId: pb.UserId,
 	}
 	// 检查token是否正确
-	if !checkToken(strconv.FormatInt(pb.UserId, 10), pb.Password){
+	if !checkToken(strconv.FormatInt(pb.UserId, 10), pb.Password) {
 		rpb.Result = _const.TOKEN_WRONG
-	}else{
+	} else {
 		rpb.Result = _const.TOKEN_RIGHT
 	}
 

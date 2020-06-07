@@ -10,6 +10,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"tcpFrame/config/consul"
+	_const "tcpFrame/const"
 	"tcpFrame/dao"
 	"tcpFrame/handle"
 	"tcpFrame/util"
@@ -17,12 +19,13 @@ import (
 
 var count int64
 
-// consul 服务端会自己发送请求，来进行健康检查
+//本服务注册使用的ip和端口
+var ipAddr string = "127.0.0.1"
+var port int = 8081
 
 func getTokenServer() {
-	var checkPort = 8081
 	http.HandleFunc("/getToken", getToken)
-	http.ListenAndServe(fmt.Sprintf(":%d", checkPort), nil)
+	http.ListenAndServe(fmt.Sprintf("%s:%d", ipAddr, port), nil)
 
 }
 
@@ -47,7 +50,7 @@ func getToken(w http.ResponseWriter, r *http.Request) {
 	fmt.Println(util.RunFuncName(), userId, userName)
 	// 首先获取用户token
 	token, err := dao.GetuserToken(userId)
-	if token!="" && err==nil{
+	if token != "" && err == nil {
 		log.Println("just get")
 		fmt.Fprint(w, token)
 		return
@@ -62,6 +65,12 @@ func getToken(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	dao.InitRedis("", "127.0.0.1:6379", 0)
+	redisCfg, _ := consul.GetRedisCfg(_const.CONSUL_IP, _const.CONSUL_PORT)
+	fmt.Println(util.RunFuncName(), redisCfg)
+	if redisCfg == nil {
+		panic("配置错误！")
+	}
+	fmt.Println(redisCfg)
+	dao.InitRedis(redisCfg.Password, fmt.Sprintf("%s:%d", redisCfg.Ip, redisCfg.Port), redisCfg.DB)
 	getTokenServer()
 }

@@ -6,7 +6,6 @@ package main
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
 	"github.com/golang/protobuf/proto"
 	"log"
@@ -21,31 +20,27 @@ import (
 	"time"
 )
 
-func Open(addr string) (*bufio.ReadWriter, net.Conn, error) {
-	fmt.Println("Dial " + addr)
-	//conn, err := tls.Dial("tcp", addr, nil)
-	conn, err := net.Dial("tcp", addr)
-	if err != nil {
-		return nil, nil, errors.New(err.Error() + "Dialing " + addr + " failed")
-	}
-	return nil, conn, nil
-}
-
-var userId = int64(10001)
+var startUserId = int64(10001)
 var userName = "wuxun"
-var token string
 var done chan int
-var connClose chan int
+
 
 func main() {
+	testClient(startUserId)
+	fmt.Println(util.RunFuncName(), startUserId)
+	time.Sleep(time.Microsecond * 1000)
+}
+
+func testClient(userId int64) {
+	var connClose chan int
 	//go testRbtAndServerRegist()
 
 	//首先通过http请求获取token
-	token = httpGetToken(strconv.FormatInt(userId, 10), userName)
+	token := httpGetToken(strconv.FormatInt(userId, 10), userName)
 	if token == "" {
 		log.Fatal("token 获取失败！")
 	}
-	_, conn, err := Open("127.0.0.1:8080")
+	conn, err := net.Dial("tcp", "127.0.0.1:8080")
 	if err != nil {
 		fmt.Println("dial failed:", err)
 		os.Exit(1)
@@ -74,7 +69,7 @@ func main() {
 
 	connClose = make(chan int, 1)
 	rw := bufio.NewReadWriter(bufio.NewReader(conn), bufio.NewWriter(conn))
-	loginWithToken(rw, userId, userName)
+	loginWithToken(rw, userId, userName, token)
 	go Heartbeat(userId, rw, connClose)
 	<-connClose
 	os.Exit(2)
@@ -101,7 +96,7 @@ func Heartbeat(userId int64, rw *bufio.ReadWriter, closeFlag chan int) error {
 	return nil
 }
 
-func loginWithToken(rw *bufio.ReadWriter, userId int64, userName string) error {
+func loginWithToken(rw *bufio.ReadWriter, userId int64, userName, token string) error {
 	req := &heartbeat.TokenTcpRequest{
 		UserId:   userId,
 		UserName: userName,

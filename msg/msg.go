@@ -6,7 +6,6 @@ package msg
 
 import (
 	"bufio"
-	"encoding/json"
 	"errors"
 	"github.com/golang/protobuf/proto"
 	"log"
@@ -14,7 +13,6 @@ import (
 	configCs "tcpFrame/config/consul"
 	"tcpFrame/conns"
 	"tcpFrame/const"
-	"tcpFrame/dao"
 	"tcpFrame/datas/proto"
 	"tcpFrame/msgMQ/nats-mq"
 	"tcpFrame/registry"
@@ -27,30 +25,15 @@ var serverConfigs map[string][]configCs.ServerRegistry
 
 var senderId string
 
-//tcpConn连接服注册方法
-func InitServer(serverId string) {
-	//初始化数据库
-	dao.InitRedis("", "127.0.0.1:6379", 0)
-	senderId = serverId
-	var rfaddr1 ServerRfAddr
-	register = registry.Registery(&rfaddr1)
-
-	// todo 读取config配置
-	multiConfig, err := configCs.ReaderConfig("127.0.0.1", 8500, []string{"serverRegistry", _const.ST_MULTI})
-	if err != nil {
-		log.Println(err)
-	}
-	serverConfigs = make(map[string][]configCs.ServerRegistry)
-	mJ := make([]configCs.ServerRegistry, 1)
-	json.Unmarshal(multiConfig, &mJ)
-	serverConfigs[_const.ST_MULTI] = mJ
-
-	//消息中间件订阅
-	natsmq.AsyncNats(serverId, serverId, handleNatsMsg)
-}
-
 //tcp连接后处理消息的入口，进行数据解读以及消息分发
 func HandleConnection(conn net.Conn) {
+
+	//设定一个连接超过此数量直接拒绝连接，防止导致之前的连接出错
+	if conns.LenthConn() > _const.MAX_CONNS_LENGTH{
+		conn.Close()
+		return
+	}
+
 	//读取的数据通过chan交互
 	rw := bufio.NewReadWriter(bufio.NewReader(conn), bufio.NewWriter(conn))
 	headBytesChan := make(chan []byte, 1)

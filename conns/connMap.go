@@ -40,6 +40,12 @@ func init() {
 }
 
 func PushChan(connID int, connValue interface{}){
+	// 如果已经有了连接，先断开此链接
+	oldConnCli := GetConnByUId(int(connID))
+	if oldConnCli!=nil{
+		oldConn := oldConnCli.GetConn()
+		oldConn.Close()
+	}
 	cMap.connMap.Store(connID, connValue)
 	cMap.connLiveMap[connID] = time.Now().Unix()
 }
@@ -67,6 +73,11 @@ func GetConnByUId(connId int)*ClientConn{
 
 func DelConnById(cId int){
 	//先断开连接
+	if cli, isOk := cMap.connMap.Load(cId);isOk{
+		connCli := cli.(*ClientConn)
+		connCli.conn.Close()
+	}
+
 	cMap.connMap.Delete(cId)
 	delete(cMap.connLiveMap, cId)
 

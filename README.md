@@ -105,7 +105,7 @@ registry使用反射的方式将对应的方法注册成map[funcName]func，使�
 安装consul
 安装rabbitmq
 安装redis
-安装mongo
+安装mongoDB
 
 在主目录下 ./tcpFrame中执行
 go mod tidy
