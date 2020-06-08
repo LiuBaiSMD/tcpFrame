@@ -31,7 +31,6 @@ var myOpts opts
 
 //tcpConn连接服注册方法
 func InitServer(serverId string, setOpts ...opt) {
-
 	for _, o := range setOpts {
 		o(&myOpts)
 	}

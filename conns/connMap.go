@@ -22,16 +22,16 @@ type ConnMap struct {
 	connMap  sync.Map
 	curConnID int
 	connCMap chan *ClientConn
-	connLiveMap map[int]int64
+	connLiveMap sync.Map
 }
 
 var connIDCreator chan int
 var cMap ConnMap
+var connCount int
 
 func init() {
 	cMap.connCMap = make(chan *ClientConn, 10000)
 	connIDCreator = make(chan int, 1)
-	cMap.connLiveMap = make(map[int]int64)
 	cMap.curConnID = -1
 	connIDCreator <- 1
 	dao.Init()
@@ -47,7 +47,7 @@ func PushChan(connID int, connValue interface{}){
 		oldConn.Close()
 	}
 	cMap.connMap.Store(connID, connValue)
-	cMap.connLiveMap[connID] = time.Now().Unix()
+	cMap.connLiveMap.Store(connID, time.Now().Unix())
 }
 
 func FlushConnLive(connID int){
@@ -56,7 +56,7 @@ func FlushConnLive(connID int){
 	if conn==nil{
 		return
 	}
-	cMap.connLiveMap[connID] = time.Now().Unix()
+	cMap.connLiveMap.Store(connID, time.Now().Unix())
 }
 
 func GetConnByUId(connId int)*ClientConn{
@@ -79,12 +79,20 @@ func DelConnById(cId int){
 	}
 
 	cMap.connMap.Delete(cId)
-	delete(cMap.connLiveMap, cId)
+	cMap.connLiveMap.Delete(cId)
 
 }
 
 func LenthConn()int{
-	return len(cMap.connLiveMap)
+	connCount = 0
+	cMap.connLiveMap.Range(countLenth)
+	//return len()
+	return connCount
+}
+
+func countLenth(k, v interface{})bool{
+	connCount++
+	return true
 }
 
 func GetCMap()ConnMap{

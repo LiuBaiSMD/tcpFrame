@@ -11,7 +11,6 @@ import (
 	"log"
 	"net"
 	"net/http"
-	"os"
 	"strconv"
 	"tcpFrame/const"
 	"tcpFrame/datas/proto"
@@ -26,9 +25,14 @@ var done chan int
 
 
 func main() {
-	testClient(startUserId)
-	fmt.Println(util.RunFuncName(), startUserId)
-	time.Sleep(time.Microsecond * 1000)
+	for u:=startUserId;u<15001;u++{
+		go testClient(u)
+		fmt.Println(util.RunFuncName(), u)
+		time.Sleep(time.Microsecond * 10)
+	}
+	select {
+
+	}
 }
 
 func testClient(userId int64) {
@@ -43,7 +47,8 @@ func testClient(userId int64) {
 	conn, err := net.Dial("tcp", "127.0.0.1:8080")
 	if err != nil {
 		fmt.Println("dial failed:", err)
-		os.Exit(1)
+		//os.Exit(1)
+		return
 	}
 	defer conn.Close()
 
@@ -72,7 +77,8 @@ func testClient(userId int64) {
 	loginWithToken(rw, userId, userName, token)
 	go Heartbeat(userId, rw, connClose)
 	<-connClose
-	os.Exit(2)
+	return
+	//os.Exit(2)
 }
 
 func Heartbeat(userId int64, rw *bufio.ReadWriter, closeFlag chan int) error {
@@ -125,9 +131,8 @@ func httpGetToken(userId, userName string) string {
 	response, _ := client.Do(reqest)
 	tokenBData := make([]byte, 1024)
 	n, _ := response.Body.Read(tokenBData)
-	fmt.Println(n, string(tokenBData[:n]), err)
+	fmt.Println(userId, string(tokenBData[:n]), err)
 	if n > 0 && err == nil {
-		fmt.Println("http token:", string(tokenBData[:n]))
 		return string(tokenBData[:n])
 	}
 	return ""

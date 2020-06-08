@@ -15,6 +15,7 @@ import (
 	"tcpFrame/server-registry"
 	"tcpFrame/util"
 	"time"
+	"os"
 )
 
 //本服务注册使用的ip和端口
@@ -22,6 +23,13 @@ var ipAddr string = "127.0.0.1"
 var port int = 8080
 
 func main() {
+
+	f, _ := os.OpenFile("~/Desktop/log.txt", os.O_WRONLY|os.O_CREATE|os.O_SYNC|os.O_APPEND,0755)
+
+	os.Stdout = f
+
+	os.Stderr = f
+
 	go countConn()
 
 	//先从服务器获取配置
@@ -38,8 +46,8 @@ func main() {
 	if err != nil {
 		log.Fatalln("服务注册失败： ", _const.ST_TCPCONN)
 	}
-	defer server_registry.DeRegistry(serverId)
-
+	server_registry.DeferDeRegistryAll(_const.ST_TCPCONN)
+	defer fmt.Println("defer1")
 	//启动服务
 	msg.InitServer(serverId,
 		msg.SetRedisCfg(*redisCfg),

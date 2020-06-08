@@ -28,6 +28,7 @@ var (
 var (
 	ST_TCPCONN  = "tcpConn"
 	ST_TOKENLIB = "tokenlib"
+	ST_HTTP_TOKEN = "httpToken"
 )
 
 //服务中的cmd指令类型

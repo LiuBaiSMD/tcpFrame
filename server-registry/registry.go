@@ -34,7 +34,7 @@ func ConsulConnect(consulUrl string) {
 	csCli, _ = consulapi.NewClient(config)
 }
 
-func DeferDeregistry(serverId string) {
+func DeferDeRegistry(serverId string) {
 	c := make(chan os.Signal, 2)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() {
@@ -44,7 +44,20 @@ func DeferDeregistry(serverId string) {
 	}()
 }
 
+func DeferDeRegistryAll(serverName string) {
+	c := make(chan os.Signal, 2)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-c //阻塞等待
+		DeRegistryAll(serverName)
+		os.Exit(0)
+	}()
+}
+
 func RegisterServer(serviceIp string, servicePort int, serviceName string, tags []string) ( string, error) {
+	defer fmt.Println("defer2")
+	fmt.Println("---->defer")
+
 	if csCli == nil {
 		print("consul client not init!")
 		return "", errors.New("consul client not init!")
@@ -65,7 +78,7 @@ func RegisterServer(serviceIp string, servicePort int, serviceName string, tags 
 	}
 	servers[registration.ID] = registration
 	fmt.Println(util.RunFuncName(), servers)
-	go DeferDeregistry(serviceId)
+	go DeferDeRegistry(serviceId)
 	return serviceId, nil
 }
 
