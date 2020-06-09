@@ -12,6 +12,7 @@ import (
 	"net"
 	"net/http"
 	"strconv"
+	"sync"
 	"tcpFrame/const"
 	"tcpFrame/datas/proto"
 	"tcpFrame/msg"
@@ -73,14 +74,15 @@ func testClient(userId int64) {
 	rw := bufio.NewReadWriter(bufio.NewReader(conn), bufio.NewWriter(conn))
 	//var st chan string
 	loginWithToken(rw, userId, userName, token)
-	go Heartbeat(userId, rw, connClose)
-	go Chat(userId, rw, connClose)
+	var sendLock sync.Mutex
+	go Heartbeat(userId, rw, connClose, sendLock)
+	go Chat(userId, rw, connClose, sendLock)
 	<-connClose
 	return
 	//os.Exit(2)
 }
 
-func Heartbeat(userId int64, rw *bufio.ReadWriter, closeFlag chan int) error {
+func Heartbeat(userId int64, rw *bufio.ReadWriter, closeFlag chan int, l sync.Mutex) error {
 	timer := time.NewTicker(time.Second * time.Duration(_const.HEARTBEAT_INTERVAL))
 	for {
 		select {
@@ -90,7 +92,9 @@ func Heartbeat(userId int64, rw *bufio.ReadWriter, closeFlag chan int) error {
 				Version: "v1.0.1",
 			}
 			msgByte, _ := proto.Marshal(req)
+			l.Lock()
 			err := msg.SendMessage(rw, _const.ST_TCPCONN, _const.CT_HEARTBEAT, msgByte, userId)
+			l.Lock()
 			if err != nil {
 				fmt.Println(util.RunFuncName(), " : ", err)
 				closeFlag <- 1
@@ -101,12 +105,11 @@ func Heartbeat(userId int64, rw *bufio.ReadWriter, closeFlag chan int) error {
 	return nil
 }
 
-func Chat(userId int64, rw *bufio.ReadWriter, closeFlag chan int) error {
+func Chat(userId int64, rw *bufio.ReadWriter, closeFlag chan int, l sync.Mutex) error {
 	timer := time.NewTicker(time.Second * time.Duration(_const.HEARTBEAT_INTERVAL))
 	for {
 		select {
 		case <-timer.C:
-			time.Sleep(time.Second)
 			req := &request.CommunicateReq{
 				UserId:  userId,
 				//UserId:  10005,
@@ -114,7 +117,9 @@ func Chat(userId int64, rw *bufio.ReadWriter, closeFlag chan int) error {
 				Version: "v1.0.1",
 			}
 			msgByte, _ := proto.Marshal(req)
+			l.Lock()
 			err := msg.SendMessage(rw, _const.ST_CHAT_ROOM, _const.CT_COMMUNICATE, msgByte, userId)
+			l.Unlock()
 			if err != nil {
 				fmt.Println(util.RunFuncName(), " : ", err)
 				//closeFlag <- 1

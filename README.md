@@ -17,7 +17,6 @@
 ├── dao             #数据库中心
 ├── datas           #数据结构管理
 ├── doc             #文档说明
-├── handle          #处理方法
 ├── msg             #tcp消息监听、解析、分发
 ├── msgMQ           #消息中间件
 ├── registry        #处理方法注册（类似于装饰器）
@@ -133,6 +132,6 @@ go run ./tcpFrame/client/http-token/http-token.go
 ```
 1.启动client中的client，模拟客户端请求
 go run clinet
-2.启动client中的token-server,模拟服务集群中的token生成服务
-go run ./tcpFrame/client/token-server.go
+2.模拟启动后端服务集群的聊天服务
+go run ./tcpFrame/client/chat-server.go
 ```
