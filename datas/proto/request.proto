@@ -5,8 +5,8 @@
 */
 syntax = "proto3";
 
-package heartbeat;
-option go_package = ".;heartbeat";
+package request;
+option go_package = ".;request";
 
 message RequestHeader {
     int64 user_id = 1;
@@ -21,10 +21,11 @@ message RequestHeader {
 message MsgBody {
     int32 msg_type = 1;
     string sender_id = 2;
-    string cmd_type = 3;
-    int64 user_id = 4;
-    bytes msg_bytes = 5;
-    string version = 6;
+    string server_type =3;
+    string cmd_type = 4;
+    int64 user_id = 5;
+    bytes msg_bytes = 6;
+    string version = 7;
 }
 
 message TokenTcpRequest {
@@ -79,5 +80,6 @@ message CommunicateReq {
 message CommunicateRsp {
     int64 user_id = 1;
     int64 code = 2;
-    string version = 3;
+    string message = 3;
+    string version = 4;
 }

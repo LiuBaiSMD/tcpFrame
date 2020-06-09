@@ -19,14 +19,14 @@ import (
 var ioBuf []byte
 
 func Test_ParseMsg(t *testing.T) {
-	msgBody := &heartbeat.LoginRequest{
+	msgBody := &request.LoginRequest{
 		UserName:  "wuxun",
 		Password:  "123456",
 		LoginType: 1,
 	}
 	msgBytes, _ := proto.Marshal(msgBody)
 
-	sendHeader := &heartbeat.RequestHeader{
+	sendHeader := &request.RequestHeader{
 		CmdType: "getToken",
 		Version: "v1.0.1",
 	}
@@ -54,7 +54,7 @@ func Test_ParseMsg(t *testing.T) {
 }
 
 func Test_protoChange(t *testing.T) {
-	protoMsg := &heartbeat.LoginRequest{
+	protoMsg := &request.LoginRequest{
 		UserId:   1,
 		UserName: "wuxun",
 		Password: "123456",
@@ -69,7 +69,7 @@ func changeProto(msgProto proto.Message) {
 	if err != nil {
 		fmt.Println("err: ", err)
 	}
-	hp := &heartbeat.LoginRequest{}
+	hp := &request.LoginRequest{}
 	err = proto.Unmarshal(pb, hp)
 	fmt.Println(util.RunFuncName(), "err: ", err, "msgProto: ", hp, "\nbinary: ", pb)
 	fmt.Println(util.BytesToBinaryString(pb))
@@ -77,19 +77,19 @@ func changeProto(msgProto proto.Message) {
 }
 
 func Test_ParseMsg2RbtByte(t *testing.T) {
-	dp := &heartbeat.TokenTcpRequest{
+	dp := &request.TokenTcpRequest{
 		UserId:   10001,
 		UserName: "wuxun",
 	}
 	pb, _ := proto.Marshal(dp)
-	db := msg.ParseMsg2RbtByte("test", "token", 10001, _const.MT_NORMAL_SERVER, pb)
-	container := &heartbeat.TokenTcpRequest{}
+	db := msg.ParseMsg2RbtByte("test", _const.ST_TCPCONN, "token", 10001, _const.MT_NORMAL_SERVER, pb)
+	container := &request.TokenTcpRequest{}
 	parseBytes2Pb(db, container)
 	fmt.Println(util.RunFuncName(), container)
 }
 
 func parseBytes2Pb(db []byte, container proto.Message) error {
-	msgBody := &heartbeat.MsgBody{}
+	msgBody := &request.MsgBody{}
 	err := proto.Unmarshal(db, msgBody)
 	if err != nil {
 		return err

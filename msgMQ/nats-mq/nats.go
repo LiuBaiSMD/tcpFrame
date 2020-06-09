@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"github.com/nats-io/nats.go"
 	"tcpFrame/util"
+	"log"
 )
 
 const (
@@ -31,7 +32,11 @@ func Init(ip string, port int) {
 //订阅一个服务的方法， subj为订阅的频道，workQueue为工作组，
 //handle为接收到方法需要对数据进行操作的自动调用的方法
 func AsyncNats(subj string, workQueue string, handle nats.MsgHandler) {
-	nc.QueueSubscribe(subj, workQueue, handle)
+	_, err := nc.QueueSubscribe(subj, workQueue, handle)
+	//_, err := nc.Subscribe(subj, handle)
+	if err!=nil{
+		log.Println(util.RunFuncName(), err)
+	}
 }
 
 func Publish(subj string, msg []byte) error {

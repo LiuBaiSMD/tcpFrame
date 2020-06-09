@@ -18,7 +18,7 @@ import (
 func Test_rabbitMq(t *testing.T) {
 	err := msgMQ.BindServiceQueue("server1", "exchangeName1")
 	fmt.Println(util.RunFuncName(), err)
-	dp := &heartbeat.LoginRequest{
+	dp := &request.LoginRequest{
 		UserName:"wuxun",
 		Password:"123456",
 		LoginType:1,
@@ -34,7 +34,7 @@ func Test_rabbitMq(t *testing.T) {
 	}else{
 		message := <- rbtMsg
 		fmt.Println("get message : ", message.Body)
-		dp2 := &heartbeat.LoginRequest{}
+		dp2 := &request.LoginRequest{}
 		err = proto.Unmarshal(message.Body, dp2)
 		fmt.Println("dp2: ", dp2, " err: ", err)
 	}

@@ -42,6 +42,7 @@ func (b *ServerRfAddr) HeartBeat() registry.HttpWR {
 		log.Println(util.RunFuncName(), req) //获取请求的方法
 
 		rsp := &heartbeat.HeartBeatRsp{
+			UserId: req.UserId,
 			Code:    200,
 			Version: version,
 		}
@@ -63,7 +64,7 @@ func handleNatsMsg(msg *nats.Msg) {
 		log.Println(util.RunFuncName(), "nil conn!")
 		return
 	}
-	SendMessage(rw, _const.ST_TOKENLIB, hp.CmdType, hp.MsgBytes, hp.UserId)
+	SendMessage(rw, hp.ServerType, hp.CmdType, hp.MsgBytes, hp.UserId)
 }
 
 func checkToken(userId, token string) bool {

@@ -78,14 +78,15 @@ func EncodeLenthByte(buf []byte) uint32 {
 	return binary.BigEndian.Uint32(buf)
 }
 
-func ParseMsg2RbtByte(senderId, cmdType string, userId int64, msgType int32, msgBytes []byte) []byte {
-	rbtByte := &heartbeat.MsgBody{
-		MsgType: msgType,
-		SenderId: senderId,
-		CmdType: cmdType,
-		UserId: userId,
-		MsgBytes: msgBytes,
-		Version: version,
+func ParseMsg2RbtByte(senderId, serverType, cmdType string, userId int64, msgType int32, msgBytes []byte) []byte {
+	rbtByte := &request.MsgBody{
+		MsgType:    msgType,
+		ServerType: serverType,
+		SenderId:   senderId,
+		CmdType:    cmdType,
+		UserId:     userId,
+		MsgBytes:   msgBytes,
+		Version:    version,
 	}
 	bData, _ := proto.Marshal(rbtByte)
 	return bData

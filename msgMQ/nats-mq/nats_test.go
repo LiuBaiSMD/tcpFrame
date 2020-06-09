@@ -7,18 +7,17 @@
 package natsmq_test
 
 import (
-	"flag"
 	"fmt"
 	"github.com/nats-io/nats.go"
 	"log"
-	natsmq "tcpFrame/msgMQ/nats-mq"
+	"tcpFrame/msgMQ/nats-mq"
 	"testing"
 	"time"
 )
 
 
 const (
-	url = "nats://localhost:4222,nats://localhost:4222"
+	url = "nats://localhost:4222"
 	subj = "weather"
 )
 
@@ -46,13 +45,14 @@ func Test_rabbitMq(t *testing.T) {
 
 
 func TestAsyncNats(t *testing.T) {
-	var servername = flag.String("servername", "test", "name for server")
-	var queueGroup = flag.String("group", "q", "group name for Subscribe")
+	natsmq.Init("127.0.0.1", 4222)
+	natsmq.AsyncNats("test", "test", handleMsg)
+	natsmq.AsyncNats("test", "test", handleMsg)
+	//natsmq.AsyncNats(*servername, *queueGroup+"test", handleMsg)
 
-	natsmq.AsyncNats(*servername, *queueGroup, handleMsg)
-	natsmq.AsyncNats(*servername, *queueGroup+"test", handleMsg)
-	natsmq.Publish(*servername, []byte("hello world!"))
-	select {}
+	err := natsmq.Publish("test", []byte("hello world!"))
+	fmt.Println("test:", err)
+	time.Sleep(time.Second)
 }
 func handleMsg(msg *nats.Msg) {
 	log.Println("Received a message From Async : ", string(msg.Data))
@@ -94,6 +94,7 @@ func sync(nc *nats.Conn, subj, name string) {
 
 func checkErr(err error) bool {
 	if err != nil {
+		log.Println("nats 连接失败！")
 		log.Fatal(err)
 		return false
 	}

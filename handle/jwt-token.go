@@ -8,11 +8,7 @@ desc:   how to use or use for what
 package handle
 
 import (
-	"tcpFrame/datas/proto"
-	"context"
-	"fmt"
 	"github.com/dgrijalva/jwt-go"
-	"log"
 )
 
 var SecretKey = "abcdefg"
@@ -25,20 +21,6 @@ type jwtCustomClaims struct {
 	// 追加自己需要的信息
 	Uid string `json:"uid"`
 	Name string `json:"name"`
-}
-
-func (t *JwtTokenCreator) GetToken(ctx context.Context, req *heartbeat.TokenRequest, rsp *heartbeat.TokenResponse)error{
-	log.Print("Received TokenCreator.TokenRequest request")
-	fmt.Println(req)
-	name := req.Name
-	id := req.Uid
-	tokenString, err := GetTokenReal(id, name)
-	if err!=nil{
-		return nil
-	}
-	rsp.Token = string(tokenString)
-
-	return nil
 }
 
 func GetTokenReal(userId string, name string)(string, error){

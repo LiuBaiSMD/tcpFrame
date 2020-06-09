@@ -29,7 +29,7 @@ var senderId string
 func HandleConnection(conn net.Conn) {
 
 	//设定一个连接超过此数量直接拒绝连接，防止导致之前的连接出错
-	if conns.LenthConn() > _const.MAX_CONNS_LENGTH{
+	if conns.LenthConn() > _const.MAX_CONNS_LENGTH {
 		conn.Close()
 		return
 	}
@@ -47,7 +47,6 @@ func HandleConnection(conn net.Conn) {
 	go func() {
 		<-closeFlag
 		log.Println(util.RunFuncName(), "get wrong data, will close conn!")
-		conn.Close()
 		return
 	}()
 
@@ -58,7 +57,7 @@ func HandleConnection(conn net.Conn) {
 		headBytes := <-headBytesChan
 		msgBytes := <-msgBytesChan
 
-		header := &heartbeat.RequestHeader{}
+		header := &request.RequestHeader{}
 		err := proto.Unmarshal(headBytes, header)
 		if err != nil || header.UserId == 0 {
 			//协议出错断开连接
@@ -76,17 +75,17 @@ func HandleConnection(conn net.Conn) {
 			} else {
 				err := dispatch(int(header.UserId), header.CmdType, msgBytes)
 				if err != nil {
+					log.Println(util.RunFuncName(), "data", header)
 					closeFlag <- 1
 				}
 			}
 
 		} else {
 			//根根据header，指定的serverType部分，将数据发送到对应的nats频道
-			serverName := header.ServerType
 
 			// 加工一道，方便业务模块自行进行解析
-			msgBody := ParseMsg2RbtByte(senderId, header.CmdType, header.UserId, _const.MT_TCPCONN_SERVER, msgBytes)
-			natsmq.Publish(serverName, msgBody)
+			msgBody := ParseMsg2RbtByte(senderId, header.ServerType, header.CmdType, header.UserId, _const.MT_TCPCONN_SERVER, msgBytes)
+			natsmq.Publish(header.ServerType, msgBody)
 		}
 	}
 }
@@ -109,7 +108,7 @@ func dispatch(userId int, cmdType string, msgBytes []byte) error {
 
 // 发送消息到io管道中，需要携带参数服务类型 指令类型 消息（字节格式） 发送的用户Id
 func SendMessage(rw *bufio.ReadWriter, serverType, cmdType string, sendMsg []byte, userId int64) error {
-	sendHeader := &heartbeat.RequestHeader{
+	sendHeader := &request.RequestHeader{
 		UserId:     userId,
 		ServerType: serverType,
 		CmdType:    cmdType,
@@ -120,7 +119,7 @@ func SendMessage(rw *bufio.ReadWriter, serverType, cmdType string, sendMsg []byt
 	_, err := rw.Write(bData)
 	err1 := rw.Flush()
 	if err != nil || err1 != nil {
-		log.Println(util.RunFuncName(), "have err ", err)
+		log.Println(util.RunFuncName(), "have err ", err, err1)
 		return err
 	}
 	return nil
@@ -137,7 +136,7 @@ func ReadMessage(rw *bufio.ReadWriter, headBytesChan chan []byte, msgBytesChan c
 			bData := make([]byte, 1024)
 			n, err := rw.Read(bData)
 			if err != nil {
-				log.Println("链接无法读取，连接关闭。", err)
+				log.Println(util.RunFuncName(), "链接无法读取，连接关闭。", err)
 				closeFlag <- 1
 				return
 			}
@@ -159,4 +158,3 @@ func ReadMessage(rw *bufio.ReadWriter, headBytesChan chan []byte, msgBytesChan c
 		}
 	}
 }
-

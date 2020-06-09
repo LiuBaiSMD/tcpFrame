@@ -23,16 +23,13 @@ var startUserId = int64(10001)
 var userName = "wuxun"
 var done chan int
 
-
 func main() {
-	for u:=startUserId;u<15001;u++{
+	for u := startUserId; u < 11001; u++ {
 		go testClient(u)
 		fmt.Println(util.RunFuncName(), u)
 		time.Sleep(time.Microsecond * 10)
 	}
-	select {
-
-	}
+	select {}
 }
 
 func testClient(userId int64) {
@@ -63,8 +60,8 @@ func testClient(userId int64) {
 		for {
 			headerBytes := <-headBytesChan
 			msgBytes := <-msgBytesChan
-			hp := &heartbeat.RequestHeader{}
-			mp := &heartbeat.TokenTcpRespone{}
+			hp := &request.RequestHeader{}
+			mp := &request.TokenTcpRespone{}
 			proto.Unmarshal(headerBytes, hp)
 			proto.Unmarshal(msgBytes, mp)
 			fmt.Println(util.RunFuncName(), hp)
@@ -72,10 +69,12 @@ func testClient(userId int64) {
 		}
 	}()
 
-	connClose = make(chan int, 1)
+	connClose = make(chan int, 100)
 	rw := bufio.NewReadWriter(bufio.NewReader(conn), bufio.NewWriter(conn))
+	//var st chan string
 	loginWithToken(rw, userId, userName, token)
 	go Heartbeat(userId, rw, connClose)
+	go Chat(userId, rw, connClose)
 	<-connClose
 	return
 	//os.Exit(2)
@@ -86,7 +85,7 @@ func Heartbeat(userId int64, rw *bufio.ReadWriter, closeFlag chan int) error {
 	for {
 		select {
 		case <-timer.C:
-			req := &heartbeat.HeartBeatReq{
+			req := &request.HeartBeatReq{
 				UserId:  userId,
 				Version: "v1.0.1",
 			}
@@ -102,8 +101,32 @@ func Heartbeat(userId int64, rw *bufio.ReadWriter, closeFlag chan int) error {
 	return nil
 }
 
+func Chat(userId int64, rw *bufio.ReadWriter, closeFlag chan int) error {
+	timer := time.NewTicker(time.Second * time.Duration(_const.HEARTBEAT_INTERVAL))
+	for {
+		select {
+		case <-timer.C:
+			time.Sleep(time.Second)
+			req := &request.CommunicateReq{
+				UserId:  userId,
+				//UserId:  10005,
+				Message: strconv.FormatInt(userId-1, 10), // todo 模拟给上一个用户发消息
+				Version: "v1.0.1",
+			}
+			msgByte, _ := proto.Marshal(req)
+			err := msg.SendMessage(rw, _const.ST_CHAT_ROOM, _const.CT_COMMUNICATE, msgByte, userId)
+			if err != nil {
+				fmt.Println(util.RunFuncName(), " : ", err)
+				//closeFlag <- 1
+				//return err
+			}
+		}
+	}
+	return nil
+}
+
 func loginWithToken(rw *bufio.ReadWriter, userId int64, userName, token string) error {
-	req := &heartbeat.TokenTcpRequest{
+	req := &request.TokenTcpRequest{
 		UserId:   userId,
 		UserName: userName,
 		Password: token,
