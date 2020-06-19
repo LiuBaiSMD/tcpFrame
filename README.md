@@ -119,7 +119,7 @@ sh ./tcpFrame/doc/start_plugin.sh
 ```
 使用go mod tidy下载依赖包
 1.启动rabbitmq 本地启动rabbitmq 使用默认端口
-2.启动consul 本地启动consul ： consul agent -dev
+2.启动consul 本地启动consul : consul agent -dev
 3.启动go run ./tcpFrame/server/server.go
 ```
 
