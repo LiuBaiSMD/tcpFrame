@@ -7,7 +7,6 @@
 package msg
 
 import (
-	"bufio"
 	"errors"
 	"github.com/golang/protobuf/proto"
 	"github.com/nats-io/nats.go"
@@ -26,14 +25,14 @@ type ServerRfAddr struct {
 }
 
 func (b *ServerRfAddr) Communicate() registry.HttpWR {
-	return func(rw *bufio.ReadWriter, BData []byte) error {
+	return func(conn net.Conn, BData []byte) error {
 		log.Println("method:", util.RunFuncName()) //获取请求的方法
 		return nil
 	}
 }
 
 func (b *ServerRfAddr) HeartBeat() registry.HttpWR {
-	return func(rw *bufio.ReadWriter, BData []byte) error {
+	return func(conn net.Conn, BData []byte) error {
 		req := &heartbeat.HeartBeatReq{}
 		err := proto.Unmarshal(BData, req)
 		if err != nil {
@@ -47,7 +46,7 @@ func (b *ServerRfAddr) HeartBeat() registry.HttpWR {
 			Version: version,
 		}
 		msgByte, _ := proto.Marshal(rsp)
-		SendMessage(rw, _const.ST_TCPCONN, _const.CT_HEARTBEAT, msgByte, req.UserId)
+		SendMessage(conn, _const.ST_TCPCONN, _const.CT_HEARTBEAT, msgByte, req.UserId)
 		//msgProto := &heartbeat.LoginRequest{}
 
 		conns.FlushConnLive(int(req.UserId))
@@ -59,12 +58,12 @@ func (b *ServerRfAddr) HeartBeat() registry.HttpWR {
 func handleNatsMsg(msg *nats.Msg) {
 	hp := &heartbeat.MsgBody{}
 	proto.Unmarshal(msg.Data, hp)
-	rw := conns.GetConnByUId(int(hp.UserId)).GetRwBuf()
-	if rw == nil {
+	conn := conns.GetConnByUId(int(hp.UserId)).GetConn()
+	if conn == nil {
 		log.Println(util.RunFuncName(), "nil conn!")
 		return
 	}
-	SendMessage(rw, hp.ServerType, hp.CmdType, hp.MsgBytes, hp.UserId)
+	SendMessage(conn, hp.ServerType, hp.CmdType, hp.MsgBytes, hp.UserId)
 }
 
 func checkToken(userId, token string) bool {

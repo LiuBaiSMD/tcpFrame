@@ -5,7 +5,6 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"github.com/golang/protobuf/proto"
 	"log"
@@ -20,15 +19,18 @@ import (
 	"time"
 )
 
-var startUserId = int64(10001)
-var userName = "wuxun"
-var done chan int
+var (
+	startUserId = int64(10001)
+	userName = "wuxun"
+	done chan int
+	testLen = int64(1000)
+)
 
 func main() {
-	for u := startUserId; u < 11001; u++ {
+	for u := startUserId; u < startUserId + testLen; u++ {
 		go testClient(u)
 		fmt.Println(util.RunFuncName(), u)
-		time.Sleep(time.Microsecond * 10)
+		time.Sleep(time.Microsecond * 20)
 	}
 	select {}
 }
@@ -51,13 +53,12 @@ func testClient(userId int64) {
 	defer conn.Close()
 
 	go func() {
-		rw := bufio.NewReadWriter(bufio.NewReader(conn), bufio.NewWriter(conn))
 		headBytesChan := make(chan []byte, 1)
 		msgBytesChan := make(chan []byte, 1)
 		closeFlag := make(chan int, 1)
 
 		//监听tcp层发送的消息
-		go msg.ReadMessage(rw, headBytesChan, msgBytesChan, closeFlag)
+		go msg.ReadMessage(conn, headBytesChan, msgBytesChan, closeFlag)
 		for {
 			headerBytes := <-headBytesChan
 			msgBytes := <-msgBytesChan
@@ -71,18 +72,17 @@ func testClient(userId int64) {
 	}()
 
 	connClose = make(chan int, 100)
-	rw := bufio.NewReadWriter(bufio.NewReader(conn), bufio.NewWriter(conn))
 	//var st chan string
-	loginWithToken(rw, userId, userName, token)
+	loginWithToken(conn, userId, userName, token)
 	var sendLock sync.Mutex
-	go Heartbeat(userId, rw, connClose, sendLock)
-	go Chat(userId, rw, connClose, sendLock)
+	go Heartbeat(userId, conn, connClose, sendLock)
+	go Chat(userId, conn, connClose, sendLock)
 	<-connClose
 	return
 	//os.Exit(2)
 }
 
-func Heartbeat(userId int64, rw *bufio.ReadWriter, closeFlag chan int, l sync.Mutex) error {
+func Heartbeat(userId int64, conn net.Conn, closeFlag chan int, l sync.Mutex) error {
 	timer := time.NewTicker(time.Second * time.Duration(_const.HEARTBEAT_INTERVAL))
 	for {
 		select {
@@ -93,8 +93,8 @@ func Heartbeat(userId int64, rw *bufio.ReadWriter, closeFlag chan int, l sync.Mu
 			}
 			msgByte, _ := proto.Marshal(req)
 			l.Lock()
-			err := msg.SendMessage(rw, _const.ST_TCPCONN, _const.CT_HEARTBEAT, msgByte, userId)
-			l.Lock()
+			err := msg.SendMessage(conn, _const.ST_TCPCONN, _const.CT_HEARTBEAT, msgByte, userId)
+			l.Unlock()
 			if err != nil {
 				fmt.Println(util.RunFuncName(), " : ", err)
 				closeFlag <- 1
@@ -105,7 +105,7 @@ func Heartbeat(userId int64, rw *bufio.ReadWriter, closeFlag chan int, l sync.Mu
 	return nil
 }
 
-func Chat(userId int64, rw *bufio.ReadWriter, closeFlag chan int, l sync.Mutex) error {
+func Chat(userId int64, conn net.Conn, closeFlag chan int, l sync.Mutex) error {
 	timer := time.NewTicker(time.Second * time.Duration(_const.HEARTBEAT_INTERVAL))
 	for {
 		select {
@@ -118,7 +118,7 @@ func Chat(userId int64, rw *bufio.ReadWriter, closeFlag chan int, l sync.Mutex) 
 			}
 			msgByte, _ := proto.Marshal(req)
 			l.Lock()
-			err := msg.SendMessage(rw, _const.ST_CHAT_ROOM, _const.CT_COMMUNICATE, msgByte, userId)
+			err := msg.SendMessage(conn, _const.ST_CHAT_ROOM, _const.CT_COMMUNICATE, msgByte, userId)
 			l.Unlock()
 			if err != nil {
 				fmt.Println(util.RunFuncName(), " : ", err)
@@ -130,7 +130,7 @@ func Chat(userId int64, rw *bufio.ReadWriter, closeFlag chan int, l sync.Mutex) 
 	return nil
 }
 
-func loginWithToken(rw *bufio.ReadWriter, userId int64, userName, token string) error {
+func loginWithToken(conn net.Conn, userId int64, userName, token string) error {
 	req := &request.TokenTcpRequest{
 		UserId:   userId,
 		UserName: userName,
@@ -138,7 +138,7 @@ func loginWithToken(rw *bufio.ReadWriter, userId int64, userName, token string) 
 		Version:  "v1.1.1",
 	}
 	msgByte, _ := proto.Marshal(req)
-	msg.SendMessage(rw, _const.ST_TCPCONN, _const.CT_LOGIN_WITH_TOKEN, msgByte, userId)
+	msg.SendMessage(conn, _const.ST_TCPCONN, _const.CT_LOGIN_WITH_TOKEN, msgByte, userId)
 	return nil
 }
 

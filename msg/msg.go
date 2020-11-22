@@ -5,7 +5,6 @@
 package msg
 
 import (
-	"bufio"
 	"errors"
 	"github.com/golang/protobuf/proto"
 	"log"
@@ -35,13 +34,12 @@ func HandleConnection(conn net.Conn) {
 	}
 
 	//读取的数据通过chan交互
-	rw := bufio.NewReadWriter(bufio.NewReader(conn), bufio.NewWriter(conn))
 	headBytesChan := make(chan []byte, 1)
 	msgBytesChan := make(chan []byte, 1)
 	closeFlag := make(chan int, 1)
 
 	//监听tcp层发送的消息
-	go ReadMessage(rw, headBytesChan, msgBytesChan, closeFlag)
+	go ReadMessage(conn, headBytesChan, msgBytesChan, closeFlag)
 
 	//监听连接关闭信号，如果发生错误，将关闭连接
 	go func() {
@@ -93,8 +91,8 @@ func HandleConnection(conn net.Conn) {
 // dispatch根据cmdType进行处理
 func dispatch(userId int, cmdType string, msgBytes []byte) error {
 	// 首先检查是否有这个连接，没有则直接返回
-	rw := conns.GetConnByUId(userId).GetRwBuf()
-	if rw == nil {
+	conn := conns.GetConnByUId(userId).GetConn()
+	if conn == nil {
 		log.Println(util.RunFuncName(), "nil conn")
 		return errors.New("empty conn!")
 	}
@@ -102,12 +100,12 @@ func dispatch(userId int, cmdType string, msgBytes []byte) error {
 	if !ok {
 		return errors.New("error cmdType:" + cmdType)
 	}
-	err := handleFunc(rw, msgBytes)
+	err := handleFunc(conn, msgBytes)
 	return err
 }
 
 // 发送消息到io管道中，需要携带参数服务类型 指令类型 消息（字节格式） 发送的用户Id
-func SendMessage(rw *bufio.ReadWriter, serverType, cmdType string, sendMsg []byte, userId int64) error {
+func SendMessage(conn net.Conn, serverType, cmdType string, sendMsg []byte, userId int64) error {
 	sendHeader := &request.RequestHeader{
 		UserId:     userId,
 		ServerType: serverType,
@@ -115,18 +113,18 @@ func SendMessage(rw *bufio.ReadWriter, serverType, cmdType string, sendMsg []byt
 		Version:    version,
 	}
 	headerBytes, _ := proto.Marshal(sendHeader)
-	bData, _ := BuildData(headerBytes, sendMsg)
-	_, err := rw.Write(bData)
-	err1 := rw.Flush()
+	bData, err := BuildData(headerBytes, sendMsg)
+	n, err1 := conn.Write(bData)
+	log.Println(util.RunFuncName(), userId, cmdType, n)
 	if err != nil || err1 != nil {
-		log.Println(util.RunFuncName(), "have err ", err, err1)
+		log.Println(util.RunFuncName(), userId, "have err ", err, err1, n)
 		return err
 	}
 	return nil
 }
 
 //接受消息的方法，会将解读出来的消息传入两个chan 一个是此消息的消息头header 一个是消息体， 如果发生错误会有数据传入closeFlag chan进行监听
-func ReadMessage(rw *bufio.ReadWriter, headBytesChan chan []byte, msgBytesChan chan []byte, closeFlag chan int) {
+func ReadMessage(conn net.Conn, headBytesChan chan []byte, msgBytesChan chan []byte, closeFlag chan int) {
 	var recieveBytes []byte
 
 	readChan := make(chan []byte, 1024)
@@ -134,7 +132,7 @@ func ReadMessage(rw *bufio.ReadWriter, headBytesChan chan []byte, msgBytesChan c
 	go func() {
 		for {
 			bData := make([]byte, 1024)
-			n, err := rw.Read(bData)
+			n, err := conn.Read(bData)
 			if err != nil {
 				log.Println(util.RunFuncName(), "链接无法读取，连接关闭。", err)
 				closeFlag <- 1

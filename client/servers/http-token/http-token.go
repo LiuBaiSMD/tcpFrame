@@ -34,7 +34,8 @@ func getTokenServer() {
 		log.Fatalln("服务注册失败： ", _const.ST_HTTP_TOKEN)
 	}
 	http.HandleFunc("/getToken", getToken)
-	http.ListenAndServe(fmt.Sprintf("%s:%d", ipAddr, port), nil)
+	err := http.ListenAndServe(fmt.Sprintf("%s:%d", ipAddr, port), nil)
+	fmt.Println(err)
 
 }
 
@@ -82,4 +83,7 @@ func main() {
 	fmt.Println(redisCfg)
 	dao.InitRedis(redisCfg.Password, fmt.Sprintf("%s:%d", redisCfg.Ip, redisCfg.Port), redisCfg.DB)
 	getTokenServer()
+	select {
+
+	}
 }

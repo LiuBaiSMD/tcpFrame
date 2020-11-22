@@ -7,13 +7,13 @@ package registry
 //将传入的interf中的方法包装成map[string] HttpWR ，供路由绑定使用
 
 import (
-	"bufio"
 	"log"
+	"net"
 	"reflect"
 	"tcpFrame/util"
 )
 type ControllerMapsType map[string]reflect.Value
-type HttpWR  func(w *bufio.ReadWriter,BData []byte) error
+type HttpWR  func(conn net.Conn,BData []byte) error
 type Base struct{
 	CrMap ControllerMapsType
 	FuncRegistry map[string] HttpWR
