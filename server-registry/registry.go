@@ -112,7 +112,7 @@ func getLastServiceIdByServiceName(cs *consulapi.Client, serviceName string) (st
 
 func DeRegistry(serverId string) error {
 	err := csCli.Agent().ServiceDeregister(serverId)
-	for _, ok := servers[serverId]; !ok; {
+	for _, ok := servers[serverId]; ok; {
 		delete(servers, serverId)
 		break
 	}
