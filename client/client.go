@@ -23,14 +23,14 @@ var (
 	startUserId = int64(10001)
 	userName = "wuxun"
 	done chan int
-	testLen = int64(1000)
+	testLen = int64(2000)
 )
 
 func main() {
 	for u := startUserId; u < startUserId + testLen; u++ {
 		go testClient(u)
 		fmt.Println(util.RunFuncName(), u)
-		time.Sleep(time.Microsecond * 20)
+		time.Sleep(time.Microsecond * 50)
 	}
 	select {}
 }
@@ -158,6 +158,9 @@ func httpGetToken(userId, userName string) string {
 	//处理返回结果
 	response, _ := client.Do(reqest)
 	tokenBData := make([]byte, 1024)
+	if tokenBData ==nil {
+		return ""
+	}
 	n, _ := response.Body.Read(tokenBData)
 	fmt.Println(userId, string(tokenBData[:n]), err)
 	if n > 0 && err == nil {

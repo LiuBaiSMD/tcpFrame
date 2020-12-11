@@ -115,7 +115,7 @@ func SendMessage(conn net.Conn, serverType, cmdType string, sendMsg []byte, user
 	headerBytes, _ := proto.Marshal(sendHeader)
 	bData, err := BuildData(headerBytes, sendMsg)
 	n, err1 := conn.Write(bData)
-	log.Println(util.RunFuncName(), userId, cmdType, n)
+	//log.Println(util.RunFuncName(), userId, cmdType, n)
 	if err != nil || err1 != nil {
 		log.Println(util.RunFuncName(), userId, "have err ", err, err1, n)
 		return err
