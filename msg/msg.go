@@ -151,8 +151,13 @@ func ReadMessage(conn net.Conn, headBytesChan chan []byte, msgBytesChan chan []b
 		recieveBytes = util.BytesCombine(recieveBytes, s)
 		headerBytes, msgBytes, _ := Parse2HeaderAndMsg(&recieveBytes)
 		if len(headerBytes) > 0 && len(msgBytes) > 0 {
-			headBytesChan <- headerBytes
-			msgBytesChan <- msgBytes
+			//这里处理一下通信[]bytes的内存问题
+			copyHeaderBytes := make([]byte, len(headerBytes))
+			copyMsgBytes := make([]byte, len(msgBytes))
+			copy(copyHeaderBytes, headerBytes)
+			copy(copyMsgBytes, msgBytes)
+			headBytesChan <- copyHeaderBytes
+			msgBytesChan <- copyMsgBytes
 		}
 	}
 }

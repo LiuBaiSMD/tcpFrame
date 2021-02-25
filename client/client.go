@@ -10,8 +10,9 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"os"
 	"strconv"
-	"sync"
+	//"sync"
 	"tcpFrame/const"
 	"tcpFrame/datas/proto"
 	"tcpFrame/msg"
@@ -47,7 +48,7 @@ func testClient(userId int64) {
 	conn, err := net.Dial("tcp", "127.0.0.1:8080")
 	if err != nil {
 		fmt.Println("dial failed:", err)
-		//os.Exit(1)
+		os.Exit(1)
 		return
 	}
 	defer conn.Close()
@@ -74,15 +75,14 @@ func testClient(userId int64) {
 	connClose = make(chan int, 100)
 	//var st chan string
 	loginWithToken(conn, userId, userName, token)
-	var sendLock sync.Mutex
-	go Heartbeat(userId, conn, connClose, sendLock)
-	go Chat(userId, conn, connClose, sendLock)
+	go Heartbeat(userId, conn, connClose)
+	go Chat(userId, conn, connClose)
 	<-connClose
 	return
 	//os.Exit(2)
 }
 
-func Heartbeat(userId int64, conn net.Conn, closeFlag chan int, l sync.Mutex) error {
+func Heartbeat(userId int64, conn net.Conn, closeFlag chan int) error {
 	timer := time.NewTicker(time.Second * time.Duration(_const.HEARTBEAT_INTERVAL))
 	for {
 		select {
@@ -92,9 +92,7 @@ func Heartbeat(userId int64, conn net.Conn, closeFlag chan int, l sync.Mutex) er
 				Version: "v1.0.1",
 			}
 			msgByte, _ := proto.Marshal(req)
-			l.Lock()
 			err := msg.SendMessage(conn, _const.ST_TCPCONN, _const.CT_HEARTBEAT, msgByte, userId)
-			l.Unlock()
 			if err != nil {
 				fmt.Println(util.RunFuncName(), " : ", err)
 				closeFlag <- 1
@@ -105,7 +103,7 @@ func Heartbeat(userId int64, conn net.Conn, closeFlag chan int, l sync.Mutex) er
 	return nil
 }
 
-func Chat(userId int64, conn net.Conn, closeFlag chan int, l sync.Mutex) error {
+func Chat(userId int64, conn net.Conn, closeFlag chan int) error {
 	timer := time.NewTicker(time.Second * time.Duration(_const.HEARTBEAT_INTERVAL))
 	for {
 		select {
@@ -117,13 +115,13 @@ func Chat(userId int64, conn net.Conn, closeFlag chan int, l sync.Mutex) error {
 				Version: "v1.0.1",
 			}
 			msgByte, _ := proto.Marshal(req)
-			l.Lock()
+			//l.Lock()
 			err := msg.SendMessage(conn, _const.ST_CHAT_ROOM, _const.CT_COMMUNICATE, msgByte, userId)
-			l.Unlock()
+			//l.Unlock()
 			if err != nil {
 				fmt.Println(util.RunFuncName(), " : ", err)
-				//closeFlag <- 1
-				//return err
+				closeFlag <- 1
+				return err
 			}
 		}
 	}

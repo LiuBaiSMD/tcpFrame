@@ -15,5 +15,4 @@ require (
 	github.com/pborman/uuid v1.2.0
 	github.com/streadway/amqp v0.0.0-20200108173154-1c71cc93ed71
 	golang.org/x/net v0.0.0-20191112182307-2180aed22343 // indirect
-	google.golang.org/protobuf v1.23.0
 )
