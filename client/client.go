@@ -24,7 +24,7 @@ var (
 	startUserId = int64(10001)
 	userName = "wuxun"
 	done chan int
-	testLen = int64(2000)
+	testLen = int64(1000)
 )
 
 func main() {
@@ -68,7 +68,7 @@ func testClient(userId int64) {
 			proto.Unmarshal(headerBytes, hp)
 			proto.Unmarshal(msgBytes, mp)
 			fmt.Println(util.RunFuncName(), hp)
-			fmt.Println(util.RunFuncName(), mp)
+			fmt.Println(util.RunFuncName(), userId, mp)
 		}
 	}()
 

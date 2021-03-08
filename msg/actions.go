@@ -63,6 +63,7 @@ func handleNatsMsg(msg *nats.Msg) {
 		log.Println(util.RunFuncName(), "nil conn!")
 		return
 	}
+	log.Println(util.RunFuncName(), "send message ----> ", hp.UserId)
 	SendMessage(conn, hp.ServerType, hp.CmdType, hp.MsgBytes, hp.UserId)
 }
 

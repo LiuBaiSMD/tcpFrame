@@ -5,10 +5,10 @@
 package registry_test
 
 import (
-	"bufio"
 	"fmt"
 	"github.com/golang/protobuf/proto"
 	"github.com/micro/go-micro/util/log"
+	"net"
 	heartbeat "tcpFrame/datas/proto"
 	"tcpFrame/registry"
 	"tcpFrame/util"
@@ -20,14 +20,14 @@ type RfAddrTest struct {
 }
 
 func (b* RfAddrTest)TestUserLogintest() registry.HttpWR{
-	return func(w *bufio.ReadWriter, BData []byte)error{
+	return func(w net.Conn, BData []byte)error{
 		log.Log("method:", util.RunFuncName()) //获取请求的方法
 		return nil
 	}
 }
 
 func (b* RfAddrTest) Logintest() registry.HttpWR {
-	return  func(w *bufio.ReadWriter, BData []byte)error{
+	return  func(w net.Conn, BData []byte)error{
 		log.Log("method:", util.RunFuncName()) //获取请求的方法
 		return nil
 	}
@@ -41,7 +41,7 @@ func Test_Registry(t *testing.T) {
 		f := register.FuncRegistry["Logintest"]
 		data := &heartbeat.LoginRequest{}
 		bData, _ := proto.Marshal(data)
-		f(&bufio.ReadWriter{}, bData)
+		f(nil, bData)
 	}
 	var rfaddr1 RfAddrTest
 	register1 := registry.Registery(&rfaddr1)
@@ -50,7 +50,7 @@ func Test_Registry(t *testing.T) {
 		f := register1.FuncRegistry["Logintest"]
 		data := &heartbeat.LoginRequest{}
 		bData, _ := proto.Marshal(data)
-		f(&bufio.ReadWriter{}, bData)
+		f(nil, bData)
 	}
 	for key, _ :=range register.FuncRegistry{
 		fmt.Println("func key: ", key)

@@ -159,3 +159,8 @@ datas/MsgBody
 ```
 改进tcp客户端，防止出现short write
 ```
+
+## 3.08计划
+```
+nats通信是否可以指定特定server以及通用server
+```

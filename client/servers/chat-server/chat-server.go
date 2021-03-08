@@ -63,8 +63,7 @@ func handleNatsMsg(msg *nats.Msg) {
 		pb := &request.CommunicateReq{}
 		proto.Unmarshal(msgBody.MsgBytes, pb)
 		log.Println(pb)
-		revieveUId, err := strconv.ParseInt(pb.Message, 10, 64)
-		log.Println("userId", string(revieveUId), revieveUId)
+		//revieveUId, err := strconv.ParseInt(pb.Message, 10, 64)
 		rpb := &request.CommunicateRsp{
 			//UserId:  revieveUId, // todo 模拟用户交流
 			UserId:  10005, // todo 模拟用户交流
@@ -75,6 +74,7 @@ func handleNatsMsg(msg *nats.Msg) {
 		msgBody.MsgType = _const.MT_NORMAL_SERVER
 		msgBody.SenderId = serverId
 		msgBody.MsgBytes = rspBytes
+		msgBody.UserId = 10005
 		rpbBytes, _ := proto.Marshal(msgBody)
 		err = natsmq.Publish(revieverId, rpbBytes)
 		if err != nil {

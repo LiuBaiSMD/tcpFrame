@@ -30,7 +30,7 @@ type opts struct {
 var myOpts opts
 
 //tcpConn连接服注册方法
-func InitServer(serverId string, setOpts ...opt) {
+func InitServer(serverName, serverId string, setOpts ...opt) {
 	for _, o := range setOpts {
 		o(&myOpts)
 	}
@@ -52,6 +52,7 @@ func InitServer(serverId string, setOpts ...opt) {
 
 	//消息中间件订阅
 	natsmq.AsyncNats(serverId, serverId, handleNatsMsg)
+	natsmq.AsyncNats(serverName, serverName, handleNatsMsg)
 }
 
 func SetRedisCfg(redisCfg configCs.RedisConfig) opt {

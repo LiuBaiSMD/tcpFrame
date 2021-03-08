@@ -73,7 +73,7 @@ func HandleConnection(conn net.Conn) {
 			} else {
 				err := dispatch(int(header.UserId), header.CmdType, msgBytes)
 				if err != nil {
-					log.Println(util.RunFuncName(), "data", header)
+					log.Println(util.RunFuncName(), "data dispatch error", header)
 					closeFlag <- 1
 				}
 			}

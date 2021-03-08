@@ -24,7 +24,7 @@ var port int = 8080
 
 func main() {
 
-	f, _ := os.OpenFile("~/Desktop/log.txt", os.O_WRONLY|os.O_CREATE|os.O_SYNC|os.O_APPEND,0755)
+	f, _ := os.OpenFile("~/Desktop/log.txt", os.O_WRONLY|os.O_CREATE|os.O_SYNC|os.O_APPEND, 0755)
 
 	os.Stdout = f
 
@@ -36,12 +36,13 @@ func main() {
 	consulCfg, err := consul.GetConsulCfg(_const.CONSUL_IP, _const.CONSUL_PORT)
 	natsCfg, err1 := consul.GetNatsCfg(_const.CONSUL_IP, _const.CONSUL_PORT)
 	redisCfg, err2 := consul.GetRedisCfg(_const.CONSUL_IP, _const.CONSUL_PORT)
-	if util.CheckNils(consulCfg, natsCfg, redisCfg)||util.CheckNotNils(err, err1, err2) {
+	if util.CheckNils(consulCfg, natsCfg, redisCfg) || util.CheckNotNils(err, err1, err2) {
 		panic("config error!")
 	}
 
 	//注册服务
 	server_registry.ConsulConnect(fmt.Sprintf("%s:%d", consulCfg.Ip, consulCfg.Port))
+	serverName := _const.ST_TCPCONN
 	serverId, err := server_registry.RegisterServer(ipAddr, port, _const.ST_TCPCONN, []string{"tcpConn"})
 	if err != nil {
 		log.Fatalln("服务注册失败： ", _const.ST_TCPCONN)
@@ -49,7 +50,7 @@ func main() {
 	server_registry.DeferDeRegistryAll(_const.ST_TCPCONN)
 	defer fmt.Println("defer1")
 	//启动服务
-	msg.InitServer(serverId,
+	msg.InitServer(serverName, serverId,
 		msg.SetRedisCfg(*redisCfg),
 		msg.SetConsulCfg(*consulCfg),
 		msg.SetNatsCfg(*natsCfg),
@@ -82,5 +83,3 @@ func countConn() {
 		log.Println(util.RunFuncName(), "conn length = ", conns.LenthConn())
 	}
 }
-
-
