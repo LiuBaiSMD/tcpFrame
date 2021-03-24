@@ -104,7 +104,7 @@ func Heartbeat(userId int64, conn net.Conn, closeFlag chan int) error {
 }
 
 func Chat(userId int64, conn net.Conn, closeFlag chan int) error {
-	timer := time.NewTicker(time.Second * time.Duration(_const.HEARTBEAT_INTERVAL))
+	timer := time.NewTicker(time.Second * time.Duration(_const.CHAT_INTERVAL))
 	for {
 		select {
 		case <-timer.C:

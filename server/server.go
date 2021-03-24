@@ -8,6 +8,9 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"net/http"
+	_ "net/http/pprof"
+	"os"
 	"tcpFrame/config/consul"
 	"tcpFrame/conns"
 	"tcpFrame/const"
@@ -15,7 +18,6 @@ import (
 	"tcpFrame/server-registry"
 	"tcpFrame/util"
 	"time"
-	"os"
 )
 
 //本服务注册使用的ip和端口
@@ -67,6 +69,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("listen %s fail: %s", addr, err)
 	}
+	go http.ListenAndServe("localhost:9999", nil)
 	for {
 		conn, err := listener.Accept()
 		if err != nil {

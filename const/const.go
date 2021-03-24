@@ -13,6 +13,9 @@ var MAX_LOSE_HEARTBEAT int = 3
 // 心跳的间隔秒数
 var HEARTBEAT_INTERVAL int = 5
 
+// 心跳的间隔秒数
+var CHAT_INTERVAL int = 1
+
 //记录数据长度的大小的字节数量
 var LEN_INFO_BYTE_SIZE int = 4
 
